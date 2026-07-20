@@ -1,0 +1,282 @@
+@import "tailwindcss";
+
+/* =========================================================
+   Sifria — Ánh Sáng Cổ Thư
+   Israeli-inspired dynamic 3D theme
+   ========================================================= */
+
+:root {
+  --ink: #0b1220;
+  --parchment: #f4ead2;
+  --parchment-warm: #ede0bd;
+  --stone: #d9c9a3;      /* Jerusalem limestone */
+  --gold: #d4af37;       /* Menorah gold */
+  --gold-deep: #a37d1a;
+  --tekhelet: #1b3a6b;   /* Biblical blue */
+  --tekhelet-deep: #0a2144;
+  --pomegranate: #8b1e2d;
+  --olive: #6a7a2f;
+  --dead-sea: #0b3d5c;
+  --mist: rgba(244, 234, 210, 0.08);
+}
+
+@theme inline {
+  --font-sans: var(--font-space), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-cormorant), "Times New Roman", serif;
+  --font-hebrew: var(--font-frank), "Frank Ruhl Libre", serif;
+  --color-parchment: #f4ead2;
+  --color-gold: #d4af37;
+  --color-tekhelet: #1b3a6b;
+  --color-ink: #0b1220;
+}
+
+html, body {
+  background: var(--ink);
+  color: var(--parchment);
+  font-family: var(--font-space), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
+
+body {
+  background:
+    radial-gradient(1200px 800px at 15% -10%, rgba(212, 175, 55, 0.18), transparent 60%),
+    radial-gradient(900px 700px at 110% 20%, rgba(27, 58, 107, 0.35), transparent 55%),
+    radial-gradient(700px 500px at 50% 120%, rgba(139, 30, 45, 0.22), transparent 60%),
+    linear-gradient(180deg, #06080f 0%, #0b1220 45%, #0a1a2c 100%);
+  min-height: 100vh;
+}
+
+/* Subtle mosaic tile pattern — evokes Israeli mosaic floors */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image:
+    linear-gradient(30deg, transparent 46%, var(--gold) 47%, var(--gold) 53%, transparent 54%),
+    linear-gradient(-30deg, transparent 46%, var(--tekhelet) 47%, var(--tekhelet) 53%, transparent 54%),
+    linear-gradient(90deg, transparent 48%, var(--parchment) 49%, var(--parchment) 51%, transparent 52%);
+  background-size: 42px 42px, 42px 42px, 42px 42px;
+  z-index: 0;
+}
+
+/* Star of David glyphs floating in bg */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='100' height='100'><path d='M50 8 L61 30 L86 30 L66 46 L74 72 L50 56 L26 72 L34 46 L14 30 L39 30 Z' fill='none' stroke='%23d4af37' stroke-opacity='0.35' stroke-width='1'/></svg>");
+  background-size: 220px 220px;
+  opacity: 0.05;
+  z-index: 0;
+}
+
+/* Text selection */
+::selection { background: var(--gold); color: var(--ink); }
+
+/* --- Typography helpers --- */
+.font-hebrew { font-family: var(--font-frank), "Frank Ruhl Libre", "Times New Roman", serif; }
+.font-serif { font-family: var(--font-cormorant), serif; }
+.font-display { font-family: var(--font-cormorant), serif; letter-spacing: -0.01em; }
+
+.text-gradient-gold {
+  background: linear-gradient(120deg, #f7e39a 0%, #d4af37 40%, #a37d1a 60%, #f7e39a 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 8s linear infinite;
+}
+
+.text-gradient-tekhelet {
+  background: linear-gradient(120deg, #6ea8ff 0%, #1b3a6b 60%, #7ec2ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+
+/* --- 3D cards --- */
+.card-3d {
+  transform-style: preserve-3d;
+  perspective: 1200px;
+  transition: transform .5s cubic-bezier(.2,.9,.2,1), box-shadow .5s;
+}
+.card-3d:hover {
+  transform: rotateX(4deg) rotateY(-6deg) translateY(-4px);
+  box-shadow: 0 30px 60px -20px rgba(212, 175, 55, 0.25),
+              0 15px 30px -10px rgba(0,0,0,0.5);
+}
+.card-3d .card-inner { transform: translateZ(20px); }
+
+.glass {
+  background: linear-gradient(140deg, rgba(244, 234, 210, 0.06), rgba(212, 175, 55, 0.03));
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+}
+
+.glass-strong {
+  background: linear-gradient(140deg, rgba(244, 234, 210, 0.1), rgba(27, 58, 107, 0.18));
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(212, 175, 55, 0.28);
+}
+
+.parchment {
+  background:
+    radial-gradient(ellipse at top, #fdf6e0 0%, #f4ead2 40%, #e6d7a8 100%);
+  color: #2b2210;
+  box-shadow: inset 0 0 80px rgba(163, 125, 26, 0.15),
+              0 30px 80px -20px rgba(0,0,0,0.6);
+}
+
+/* --- Floating Hebrew letters animation --- */
+.floater {
+  position: absolute;
+  pointer-events: none;
+  color: rgba(212, 175, 55, 0.28);
+  font-family: var(--font-frank), serif;
+  animation: floatY 12s ease-in-out infinite;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+}
+@keyframes floatY {
+  0%, 100% { transform: translateY(0) rotate(-3deg); opacity: .4; }
+  50% { transform: translateY(-30px) rotate(3deg); opacity: .9; }
+}
+
+/* --- Menorah/logo spin --- */
+@keyframes slowSpin {
+  from { transform: rotateY(0); }
+  to { transform: rotateY(360deg); }
+}
+.spin-3d { animation: slowSpin 24s linear infinite; transform-style: preserve-3d; }
+
+/* --- Flame flicker --- */
+@keyframes flicker {
+  0%,100% { transform: scale(1) rotate(-2deg); opacity: 1; filter: drop-shadow(0 0 8px #ffb547); }
+  25% { transform: scale(1.06) rotate(2deg); opacity: .95; filter: drop-shadow(0 0 12px #ffcf6b); }
+  50% { transform: scale(0.96) rotate(-1deg); opacity: .9; filter: drop-shadow(0 0 6px #ff9526); }
+  75% { transform: scale(1.03) rotate(3deg); opacity: 1; filter: drop-shadow(0 0 14px #ffe08a); }
+}
+.flicker { animation: flicker 2.8s ease-in-out infinite; transform-origin: 50% 100%; }
+
+/* --- Reveal on load --- */
+@keyframes riseIn {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.rise { animation: riseIn .9s cubic-bezier(.2,.8,.2,1) both; }
+.rise-2 { animation-delay: .15s; }
+.rise-3 { animation-delay: .3s; }
+.rise-4 { animation-delay: .45s; }
+
+/* --- Marquee horizontal --- */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee { animation: marquee 40s linear infinite; }
+
+/* --- Gold divider --- */
+.divider-ornate {
+  height: 24px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24'><path d='M0 12 H80 M120 12 H200' stroke='%23d4af37' stroke-width='1'/><circle cx='100' cy='12' r='4' fill='none' stroke='%23d4af37' stroke-width='1'/><path d='M90 12 L100 4 L110 12 L100 20 Z' fill='none' stroke='%23d4af37' stroke-width='1'/></svg>");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* --- Buttons --- */
+.btn-gold {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .875rem 1.5rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f2d47a 0%, #d4af37 45%, #a37d1a 100%);
+  color: #14100a;
+  font-weight: 600;
+  letter-spacing: .01em;
+  box-shadow: 0 10px 30px -8px rgba(212,175,55,.5), inset 0 1px 0 rgba(255,255,255,.5);
+  transition: transform .25s, box-shadow .25s;
+}
+.btn-gold:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -8px rgba(212,175,55,.7), inset 0 1px 0 rgba(255,255,255,.6); }
+
+.btn-outline {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .8rem 1.4rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  color: var(--parchment);
+  transition: all .25s;
+}
+.btn-outline:hover { background: rgba(212,175,55,.1); border-color: var(--gold); }
+
+/* --- Scroll bar --- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #0a0f1a; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#a37d1a, #d4af37); border-radius: 6px; }
+
+/* --- Reader specific --- */
+.verse {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 1rem;
+  padding: .75rem 0;
+  border-bottom: 1px dashed rgba(163, 125, 26, 0.25);
+}
+.verse-num {
+  font-family: var(--font-frank), serif;
+  color: var(--gold-deep);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding-top: .2rem;
+}
+.verse-he {
+  direction: rtl;
+  font-family: var(--font-frank), "Frank Ruhl Libre", serif;
+  font-size: 1.35rem;
+  line-height: 2;
+  color: #2b2210;
+}
+.verse-en {
+  font-family: var(--font-cormorant), serif;
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: #4a3d1c;
+  font-style: italic;
+}
+
+/* --- Perspective hero orb --- */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  opacity: .55;
+  animation: floatY 14s ease-in-out infinite;
+}
+
+/* --- Category tile --- */
+.tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 20px;
+  isolation: isolate;
+}
+.tile::before {
+  content: ""; position: absolute; inset: 0;
+  background: conic-gradient(from 0deg, transparent, rgba(212, 175, 55, .35), transparent 30%);
+  animation: slowSpin 8s linear infinite;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity .4s;
+}
+.tile:hover::before { opacity: 1; }
+
+/* Utilities */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
