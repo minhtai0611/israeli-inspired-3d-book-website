@@ -27,3 +27,6 @@ Thumbs.db
 
 # Serena / MCP local caches
 .serena/
+
+.vercel
+.env*
