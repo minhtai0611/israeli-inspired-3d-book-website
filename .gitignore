@@ -30,3 +30,8 @@ Thumbs.db
 
 .vercel
 .env*
+
+# Local-only AI-assistant docs (not pushed to remote)
+/CLAUDE.md
+/CHANGELOG.md
+/docs/adr/

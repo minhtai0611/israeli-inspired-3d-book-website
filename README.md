@@ -66,21 +66,11 @@ src/
   db/             Drizzle/Postgres setup (schema is currently a placeholder)
 ```
 
-See `CLAUDE.md` for a more detailed architecture walkthrough.
-
 ## Project history & decisions
 
 Notable changes are tracked in `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com)
 format). Architecturally significant, hard-to-reverse decisions and their rationale are recorded
 as [Architecture Decision Records](https://adr.github.io) in `docs/adr/`.
-
-## AI-assisted development (optional)
-
-This repo can be used with [Claude Code](https://claude.com/claude-code) plus two MCP servers for
-deeper codebase understanding: **GitNexus** (knowledge-graph exploration/impact-analysis/refactor
-tooling, installed globally) and **Serena** (LSP-backed symbol-level find/edit tooling, installed
-per-project via `claude mcp add`). See the "MCP tooling" section in `CLAUDE.md` for setup and
-when to use each — neither is required to build or run the app.
 
 ## Content attribution
 
