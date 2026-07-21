@@ -44,13 +44,13 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Scripts
 
-| Command            | Description                          |
-| ------------------- | ------------------------------------- |
-| `npm run dev`        | Start the local dev server           |
-| `npm run build`      | Production build                     |
-| `npm run start`      | Run the production build             |
-| `npm run lint`       | Lint with ESLint                     |
-| `npm run typecheck`  | Type-check with `tsc --noEmit`       |
+| Command             | Description                    |
+| ------------------- | ------------------------------- |
+| `npm run dev`       | Start the local dev server     |
+| `npm run build`     | Production build               |
+| `npm run start`     | Run the production build       |
+| `npm run lint`      | Lint with ESLint               |
+| `npm run typecheck` | Type-check with `tsc --noEmit` |
 
 There is no automated test suite yet.
 
@@ -66,11 +66,10 @@ src/
   db/             Drizzle/Postgres setup (schema is currently a placeholder)
 ```
 
-## Project history & decisions
+## Deployment
 
-Notable changes are tracked in `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com)
-format). Architecturally significant, hard-to-reverse decisions and their rationale are recorded
-as [Architecture Decision Records](https://adr.github.io) in `docs/adr/`.
+Hosted on [Vercel](https://vercel.com) with [Neon](https://neon.tech) Postgres. Pushes to
+`master` deploy to production automatically.
 
 ## Content attribution
 
