@@ -110,7 +110,7 @@ body::after {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .card-3d:hover { transform: none; }
+  .card-3d:hover { transform: none !important; }
 }
 
 /* --- Typography helpers --- */
