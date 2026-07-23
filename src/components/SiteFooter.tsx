@@ -10,8 +10,8 @@ export function SiteFooter() {
           <p className="mt-5 max-w-md font-serif text-lg leading-relaxed text-parchment/70">
             <span className="text-gradient-gold">Sifria</span> — nơi hơi thở cổ xưa của
             Jerusalem gặp gỡ ngôn ngữ hôm nay và giấc mơ ngày mai. Đọc Torah, Talmud,
-            Kabbalah, Thi thiên… bằng tiếng Việt, song ngữ Hebrew &amp; Anh, dưới ánh
-            sáng của menorah bảy nhánh.
+            Kabbalah, Thi thiên… với giao diện tiếng Việt, toàn văn song ngữ Hebrew &amp;
+            Anh, dưới ánh sáng của menorah bảy nhánh.
           </p>
           <p className="mt-4 text-xs text-parchment/50">
             Toàn bộ nội dung sách được cung cấp qua{" "}

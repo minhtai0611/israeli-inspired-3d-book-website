@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { SearchForm } from "./SearchForm";
 
 const NAV = [
   { href: "/", label: "Trang chủ" },
@@ -25,6 +26,9 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
+        <div className="hidden md:block">
+          <SearchForm compact />
+        </div>
         <div className="flex items-center gap-2">
           <Link
             href="/thu-vien"
@@ -53,6 +57,12 @@ export function SiteHeader() {
               {n.label}
             </Link>
           ))}
+          <Link
+            href="/tim-kiem"
+            className="whitespace-nowrap rounded-full border border-[#d4af37]/20 px-3 py-1 text-xs text-parchment/80 hover:border-[#d4af37]/60 md:hidden"
+          >
+            🔍 Tìm kiếm
+          </Link>
         </div>
       </div>
     </header>

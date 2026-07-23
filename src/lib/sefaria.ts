@@ -51,7 +51,16 @@ async function sefariaFetch<T>(path: string, revalidate = 60 * 60 * 6): Promise<
   if (!res.ok) {
     throw new Error(`Sefaria API ${path} → ${res.status}`);
   }
-  return res.json() as Promise<T>;
+  const data = await res.json();
+  // Sefaria returns HTTP 200 with `{ error: "..." }` for unknown titles/refs instead of a
+  // 404 status (e.g. GET /api/texts/NotARealBook_1 → 200 `{"error":"Could not find title in
+  // reference: NotARealBook 1"}`). Without this check, every caller's `res.ok` guard passes
+  // and bogus/misspelled book or chapter URLs render as blank-but-real-looking pages instead
+  // of the 404 they're meant to fall through to.
+  if (data && typeof data === "object" && "error" in data) {
+    throw new Error(`Sefaria API ${path} → ${(data as { error: string }).error}`);
+  }
+  return data as T;
 }
 
 export async function getIndex(): Promise<IndexNode[]> {

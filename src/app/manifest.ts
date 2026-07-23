@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Sifria — Ánh Sáng Cổ Thư",
     short_name: "Sifria",
     description:
-      "Thư viện đọc sách Israel bằng tiếng Việt: Torah, Talmud, Kabbalah…",
+      "Thư viện đọc sách Israel với giao diện tiếng Việt: Torah, Talmud, Kabbalah…",
     start_url: "/",
     display: "standalone",
     background_color: "#0b1220",

@@ -77,6 +77,42 @@ body::after {
 /* Text selection */
 ::selection { background: var(--gold); color: var(--ink); }
 
+/* --- Accessibility: focus visibility --- */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* --- Accessibility: skip link --- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 100;
+  padding: .75rem 1.25rem;
+  border-radius: 9999px;
+  background: var(--gold);
+  color: var(--ink);
+  font-weight: 600;
+  transition: top .2s;
+}
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* --- Accessibility: respect reduced-motion preference --- */
+@media (prefers-reduced-motion: reduce) {
+  html, body { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card-3d:hover { transform: none; }
+}
+
 /* --- Typography helpers --- */
 .font-hebrew { font-family: var(--font-frank), "Frank Ruhl Libre", "Times New Roman", serif; }
 .font-serif { font-family: var(--font-cormorant), serif; }

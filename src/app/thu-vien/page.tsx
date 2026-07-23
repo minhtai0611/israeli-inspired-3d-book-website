@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getIndex, type IndexNode } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
+import { categorySlug, flattenBooks, groupByCategory, sortCategories } from "@/lib/library";
 
 export const revalidate = 86400;
 
@@ -11,31 +12,6 @@ export const metadata: Metadata = {
     "Khám phá toàn bộ thư viện Sifria: Torah, Nabiim, Ketubim, Mishnah, Talmud, Kabbalah, Midrash, Halakhah, Chasidut và nhiều bộ khác — mỗi cuốn với chương mục đầy đủ.",
   alternates: { canonical: "/thu-vien" },
 };
-
-type FlatBook = {
-  title: string;
-  heTitle: string;
-  categoryPath: string[];
-  shortDesc?: string;
-};
-
-function flattenBooks(nodes: IndexNode[], path: string[] = []): FlatBook[] {
-  const out: FlatBook[] = [];
-  for (const n of nodes) {
-    if (n.title) {
-      out.push({
-        title: n.title,
-        heTitle: n.heTitle ?? n.title,
-        categoryPath: n.categories ?? path,
-        shortDesc: n.enShortDesc,
-      });
-    } else if (n.contents) {
-      const p = n.category ? [...path, n.category] : path;
-      out.push(...flattenBooks(n.contents, p));
-    }
-  }
-  return out;
-}
 
 export default async function LibraryPage() {
   let nodes: IndexNode[] = [];
@@ -47,42 +23,8 @@ export default async function LibraryPage() {
   }
 
   const books = flattenBooks(nodes);
-
-  // Group by top-level category
-  const grouped = new Map<string, FlatBook[]>();
-  for (const b of books) {
-    const key = b.categoryPath[0] ?? "Khác";
-    if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key)!.push(b);
-  }
-
-  const ORDER = [
-    "Tanakh",
-    "Mishnah",
-    "Talmud",
-    "Midrash",
-    "Halakhah",
-    "Kabbalah",
-    "Liturgy",
-    "Jewish Thought",
-    "Tosefta",
-    "Chasidut",
-    "Musar",
-    "Responsa",
-    "Second Temple",
-    "Reference",
-  ];
-  const sorted = [...grouped.entries()].sort(
-    ([a], [b]) => {
-      const ai = ORDER.indexOf(a);
-      const bi = ORDER.indexOf(b);
-      if (ai === -1 && bi === -1) return a.localeCompare(b);
-      if (ai === -1) return 1;
-      if (bi === -1) return -1;
-      return ai - bi;
-    },
-  );
-
+  const grouped = groupByCategory(books);
+  const sorted = sortCategories([...grouped.entries()]);
   const totalBooks = books.length;
 
   return (
@@ -127,7 +69,7 @@ export default async function LibraryPage() {
           const meta = viCategory(cat);
           const visible = list.slice(0, 24);
           return (
-            <section key={cat} id={cat.replace(/\s+/g, "-")}>
+            <section key={cat} id={categorySlug(cat)}>
               <header className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-[#d4af37]/20 pb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{meta.icon}</span>
@@ -140,9 +82,12 @@ export default async function LibraryPage() {
                     </p>
                   </div>
                 </div>
-                <span className="text-xs uppercase tracking-[0.28em] text-[#d4af37]/70">
-                  {list.length} tác phẩm
-                </span>
+                <Link
+                  href={`/thu-vien/${categorySlug(cat)}`}
+                  className="text-xs uppercase tracking-[0.28em] text-[#d4af37]/70 hover:text-[#d4af37]"
+                >
+                  {list.length} tác phẩm →
+                </Link>
               </header>
 
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -180,7 +125,12 @@ export default async function LibraryPage() {
 
               {list.length > visible.length && (
                 <p className="mt-4 text-center text-xs text-parchment/50">
-                  … và {list.length - visible.length} tác phẩm khác trong bộ “{meta.name}”.
+                  <Link
+                    href={`/thu-vien/${categorySlug(cat)}`}
+                    className="text-[#d4af37] underline decoration-[#d4af37]/40 underline-offset-2"
+                  >
+                    Xem thêm {list.length - visible.length} tác phẩm khác trong bộ “{meta.name}” →
+                  </Link>
                 </p>
               )}
             </section>

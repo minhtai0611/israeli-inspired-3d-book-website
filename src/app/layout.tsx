@@ -4,6 +4,7 @@ import { Cormorant_Garamond, Frank_Ruhl_Libre, Space_Grotesk } from "next/font/g
 import "./globals.css";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SITE_URL } from "@/lib/site";
 
 const cormorant = Cormorant_Garamond({
   subsets: ["latin", "vietnamese"],
@@ -34,16 +35,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://sifria.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Sifria · Ánh Sáng Cổ Thư — Thư viện sách Israel cổ điển và đương đại",
+    default: "Sifria · Ánh Sáng Cổ Thư — Thư viện song ngữ Hebrew–Anh, giao diện tiếng Việt",
     template: "%s · Sifria",
   },
   description:
-    "Sifria (סִפְרִיָּה) — thư viện đọc sách trực tuyến bằng tiếng Việt, mang đến toàn văn Torah, Talmud, Mishnah, Kabbalah, Thi thiên và các tác phẩm Israel từ cổ xưa đến hiện đại. Nội dung song ngữ Hebrew — Anh, được cung cấp qua Sefaria API mã nguồn mở.",
+    "Sifria (סִפְרִיָּה) — thư viện đọc sách trực tuyến với giao diện tiếng Việt cho Torah, Talmud, Mishnah, Kabbalah, Thi thiên và các tác phẩm Israel từ cổ xưa đến hiện đại. Toàn văn song ngữ Hebrew–Anh, được cung cấp qua Sefaria API mã nguồn mở.",
   keywords: [
     "đọc sách online",
-    "Torah tiếng Việt",
+    "Torah song ngữ",
     "Talmud",
     "Kinh thánh Hebrew",
     "sách Israel",
@@ -72,13 +73,13 @@ export const metadata: Metadata = {
     siteName: "Sifria — Ánh Sáng Cổ Thư",
     title: "Sifria · Ánh Sáng Cổ Thư",
     description:
-      "Thư viện đọc sách online tiếng Việt, tôn vinh nghệ thuật, kiến trúc, âm nhạc và tinh thần Israel — từ Torah cổ xưa đến các tác phẩm hiện đại.",
+      "Thư viện đọc sách online với giao diện tiếng Việt, tôn vinh nghệ thuật, kiến trúc, âm nhạc và tinh thần Israel — toàn văn song ngữ Hebrew–Anh từ Torah cổ xưa đến các tác phẩm hiện đại.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Sifria · Ánh Sáng Cổ Thư",
     description:
-      "Đọc Torah, Talmud, Kabbalah… trực tuyến, song ngữ Hebrew–Anh, giao diện lấy cảm hứng từ Israel.",
+      "Đọc Torah, Talmud, Kabbalah… trực tuyến, song ngữ Hebrew–Anh, giao diện tiếng Việt lấy cảm hứng từ Israel.",
   },
   category: "Books",
 };
@@ -89,19 +90,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     "@type": "WebSite",
     name: "Sifria — Ánh Sáng Cổ Thư",
     alternateName: "Sifria",
-    url: "https://sifria.app",
+    url: SITE_URL,
     inLanguage: "vi-VN",
     publisher: {
       "@type": "Organization",
       name: "Sifria",
       logo: {
         "@type": "ImageObject",
-        url: "https://sifria.app/icon.svg",
+        url: `${SITE_URL}/icon.svg`,
       },
     },
     potentialAction: {
       "@type": "SearchAction",
-      target: "https://sifria.app/tim-kiem?q={search_term_string}",
+      target: `${SITE_URL}/tim-kiem?q={search_term_string}`,
       "query-input": "required name=search_term_string",
     },
   };
@@ -116,8 +117,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
+        <a href="#main-content" className="skip-link">
+          Bỏ qua đến nội dung chính
+        </a>
         <SiteHeader />
-        <main className="relative z-10">{children}</main>
+        <main id="main-content" className="relative z-10">
+          {children}
+        </main>
         <SiteFooter />
       </body>
     </html>

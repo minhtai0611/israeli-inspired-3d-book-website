@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cleanText, flatten, getText } from "@/lib/sefaria";
 import { viBook } from "@/lib/vi";
+import { ReaderView } from "@/components/reader/ReaderView";
 
 export const revalidate = 43200;
 
@@ -122,51 +123,21 @@ export default async function ReaderPage({ params }: Props) {
 
       <div className="divider-ornate mb-8" />
 
-      {/* PARCHMENT SCROLL */}
-      <article className="parchment relative rounded-[28px] p-6 sm:p-10 lg:p-14">
-        {/* corner ornaments */}
-        <div className="pointer-events-none absolute inset-x-6 top-3 h-[2px] bg-gradient-to-r from-transparent via-[#a37d1a]/50 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-6 bottom-3 h-[2px] bg-gradient-to-r from-transparent via-[#a37d1a]/50 to-transparent" />
+      <ReaderView book={title} chapter={chapterNum} label={label} heTitle={data.heIndexTitle} verses={verses} />
 
-        {verses.length === 0 ? (
-          <p className="text-center italic">
-            Đoạn này chưa có nội dung khả dụng qua API Sefaria.
-          </p>
-        ) : (
-          <ol className="space-y-1">
-            {verses.map((v) => (
-              <li key={v.n} className="verse" id={`v${v.n}`}>
-                <span className="verse-num">
-                  <span className="font-hebrew" dir="rtl">{v.n}.</span>
-                </span>
-                <div>
-                  {v.he && (
-                    <p className="verse-he" dir="rtl">
-                      {v.he}
-                    </p>
-                  )}
-                  {v.en && <p className="verse-en">{v.en}</p>}
-                </div>
-              </li>
-            ))}
-          </ol>
-        )}
-
-        <footer className="mt-10 border-t border-[#a37d1a]/30 pt-4 text-center text-[11px] italic text-[#4a3d1c]">
-          Bản Hebrew:{" "}
-          <em>Miqra according to the Masorah</em> (CC-BY-SA) · Bản dịch Anh:{" "}
-          {data.versionTitle ?? "JPS Tanakh"}. Cung cấp bởi{" "}
-          <a
-            href="https://www.sefaria.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Sefaria.org
-          </a>
-          .
-        </footer>
-      </article>
+      <p className="mt-6 text-center text-[11px] italic text-parchment/50">
+        Bản Hebrew: <em>Miqra according to the Masorah</em> (CC-BY-SA) · Bản dịch Anh:{" "}
+        {data.versionTitle ?? "JPS Tanakh"}. Cung cấp bởi{" "}
+        <a
+          href="https://www.sefaria.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline"
+        >
+          Sefaria.org
+        </a>
+        .
+      </p>
 
       {/* NAV */}
       <nav className="mt-10 grid gap-4 sm:grid-cols-2">

@@ -2,15 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { HeroOrbit } from "@/components/HeroOrbit";
 import { HebrewMarquee } from "@/components/HebrewMarquee";
+import { ContinueReading } from "@/components/reader/ContinueReading";
 import { getIndex } from "@/lib/sefaria";
 import { HERO_QUOTES, viBook, viCategory } from "@/lib/vi";
 
 export const revalidate = 21600; // 6h
 
 export const metadata: Metadata = {
-  title: "Sifria · Ánh Sáng Cổ Thư — Đọc Torah, Talmud, Kabbalah tiếng Việt",
+  title: "Sifria · Ánh Sáng Cổ Thư — Đọc Torah, Talmud, Kabbalah song ngữ Hebrew–Anh",
   description:
-    "Thư viện đọc sách online tiếng Việt lấy cảm hứng từ Israel: Torah, Talmud, Kabbalah, Thi thiên, Nhã ca… Toàn văn song ngữ Hebrew–Anh, trình bày sang trọng, chuyển động 3D.",
+    "Thư viện đọc sách online với giao diện tiếng Việt, lấy cảm hứng từ Israel: Torah, Talmud, Kabbalah, Thi thiên, Nhã ca… Toàn văn song ngữ Hebrew–Anh, trình bày sang trọng, chuyển động 3D.",
 };
 
 const FEATURED = [
@@ -113,6 +114,8 @@ export default async function HomePage() {
 
         <HebrewMarquee />
       </section>
+
+      <ContinueReading />
 
       {/* ============ QUOTE STRIP ============ */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
