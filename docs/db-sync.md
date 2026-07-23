@@ -1,4 +1,4 @@
-# Sefaria index → Postgres sync (foundation)
+# Sefaria index → Postgres sync
 
 ## Status today
 
@@ -7,10 +7,14 @@ all read the Sefaria index/text APIs directly at request time (cached via Next's
 revalidation). This works but the `/index` payload is ~5.3MB, which is over Next's 2MB data-cache
 limit — every cold request re-fetches the full tree from Sefaria instead of hitting a cache.
 
-The schema in `src/db/schema.ts` and the sync script below are a foundation for fixing that: mirror
-the index into Postgres once, then have the library/search pages query the local table instead of
-Sefaria on every request. **Nothing currently reads from these tables** — wiring `/thu-vien` etc.
-over to Postgres is a follow-up once a real database is synced and validated in production.
+The schema in `src/db/schema.ts` and the sync script below mirror the index into Postgres so the
+library/search pages can eventually query the local table instead of Sefaria on every request.
+
+**The production Neon database has been synced once** (2026-07-23): 14 categories, 6,598 books,
+18 aliases (one per book with a Vietnamese label in `src/lib/vi.ts` today — most books don't have
+one yet, hence the low alias count relative to book count). Check `sync_runs` for the audit trail.
+**No page reads from these tables yet** — `/thu-vien` etc. still read Sefaria live at request
+time. Wiring them over to Postgres, and re-running the sync on a schedule, are still follow-ups.
 
 ## Tables
 
@@ -27,7 +31,7 @@ over to Postgres is a follow-up once a real database is synced and validated in 
 Requires a real, reachable `DATABASE_URL` (Neon or any Postgres 14+):
 
 ```bash
-# 1. Create the tables (uses drizzle.config.json)
+# 1. Create the tables (drizzle.config.ts reads DATABASE_URL from the environment/.env)
 npm run db:push
 # — or, to review the SQL first: npx drizzle-kit generate, then apply drizzle/*.sql yourself
 
@@ -42,8 +46,9 @@ key/title, so re-running is safe), and records one `sync_runs` row per attempt.
 ## Not done here
 
 - No cron/webhook triggers this automatically — it's a manual `npm run sync:sefaria` today.
-- No page has been switched over to read from Postgres instead of the live Sefaria fetch.
-- No local Postgres was available in the environment this was built in, so the script above is
-  typechecked and its schema is verified via `drizzle-kit generate` (produces a real migration,
-  `drizzle/0000_damp_the_anarchist.sql`), but it has not been run end-to-end against a live
-  database.
+  The index changes rarely, but the sync should be re-run periodically to stay current.
+- No page has been switched over to read from Postgres instead of the live Sefaria fetch —
+  the tables are populated but not yet consumed by any route.
+- Only 18 of 6,598 books have a `book_aliases` row today, because only that many have a
+  Vietnamese label in `src/lib/vi.ts` — expanding `BOOK_VI` and re-running the sync would
+  grow that coverage.
