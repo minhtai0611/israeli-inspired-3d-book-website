@@ -1,5 +1,7 @@
 # Sifria · Ánh Sáng Cổ Thư (סִפְרִיָּה)
 
+[![CI](https://github.com/minhtai0611/israeli-inspired-3d-book-website/actions/workflows/ci.yml/badge.svg)](https://github.com/minhtai0611/israeli-inspired-3d-book-website/actions/workflows/ci.yml)
+
 Sifria is a reading site for classical and contemporary Israeli/Jewish texts — Torah, Tanakh,
 Mishnah, Talmud, Kabbalah, Psalms, and more — with a Vietnamese-language interface and an
 Israeli-inspired, animated 3D visual theme.
@@ -69,10 +71,14 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run start`       | Run the production build                             |
 | `npm run lint`        | Lint with ESLint                                      |
 | `npm run typecheck`   | Type-check with `tsc --noEmit`                       |
+| `npm run test`        | Run the Vitest unit suite                             |
+| `npm run test:cov`    | Run the unit suite with coverage                      |
+| `npm run audit:coverage` | Sample the catalog and measure real book readability (see `scripts/audit-coverage.ts`) |
 | `npm run db:push`     | Push `src/db/schema.ts` to `DATABASE_URL`             |
 | `npm run sync:sefaria`| Mirror the Sefaria index into Postgres — see `docs/db-sync.md` |
 
-There is no automated test suite yet.
+CI runs lint, typecheck, the unit suite, a production-dependency security audit, and a build on
+every push/PR — see `.github/workflows/ci.yml`.
 
 ## Project structure
 
@@ -117,3 +123,14 @@ Hebrew text is the Masoretic text (CC-BY-SA); English translations and book meta
 via the [Sefaria](https://www.sefaria.org) Open API under their respective licenses. Sifria does
 not modify or reinterpret the underlying text — see the `/ve-chung-toi` page for more on the
 project's approach.
+
+## License
+
+Code: MIT (see `LICENSE`).
+
+The text content served by this site is **not** owned by this project:
+- Hebrew source text is served via Sefaria under its own licensing (typically CC-BY-SA).
+- English translations and metadata are served via the [Sefaria](https://www.sefaria.org) Open
+  API under their respective per-work licenses.
+
+Sifria does not modify or reinterpret the underlying source text.

@@ -1,5 +1,7 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "sifria",
+  "version": "0.1.0",
+  "description": "Vietnamese-language reading site for Torah, Tanakh, Mishnah, Talmud, Kabbalah and Psalms, serving Hebrew/English text live from the Sefaria Open API.",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -7,6 +9,9 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
     "sync:sefaria": "tsx scripts/sync-sefaria-index.ts",
     "db:push": "drizzle-kit push",
     "audit:coverage": "tsx scripts/audit-coverage.ts"
@@ -25,13 +30,15 @@
     "@types/pg": "8.18.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@vitest/coverage-v8": "4.1.10",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.11",
     "postcss": "8.5.22",
     "tailwindcss": "4.1.17",
     "tsx": "4.23.1",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "4.1.10"
   },
   "overrides": {
     "postcss": "8.5.22",

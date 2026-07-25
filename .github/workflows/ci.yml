@@ -1,0 +1,26 @@
+name: CI
+on:
+  push: { branches: [master, "fix/**", "feat/**"] }
+  pull_request: { branches: [master] }
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm }
+      - run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm run test:cov
+      - name: Security audit (production deps, block HIGH+)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db
+          NEXT_PUBLIC_SITE_URL: https://example.com
