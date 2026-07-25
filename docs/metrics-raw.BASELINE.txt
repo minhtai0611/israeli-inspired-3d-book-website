@@ -1,0 +1,30 @@
+=== Measured at 2026-07-25T16:28:38+07:00 - base=https://israeli-inspired-3d-book-website.vercel.app ===
+--- HTML size (compressed) ---
+/                            compressed=15377    raw=108404
+/thu-vien                    compressed=52058    raw=534277
+/thu-vien/Halakhah           compressed=43679    raw=555923
+/thu-vien/Talmud             compressed=33274    raw=381032
+/sach/Genesis                compressed=9666     raw=91255
+/doc/Genesis/1               compressed=13814    raw=81538
+--- Cache headers ---
+/                            X-Nextjs-Prerender: 1 X-Vercel-Cache: HIT 
+/thu-vien                    X-Nextjs-Prerender: 1 X-Vercel-Cache: HIT 
+/sach/Genesis                X-Vercel-Cache: MISS 
+/doc/Genesis/1               X-Vercel-Cache: MISS 
+/doc/Psalms/23               X-Vercel-Cache: MISS 
+--- TTFB (20 runs, /doc/Genesis/1) ---
+p50=0.640s p95=0.692s
+--- Homepage JS bundle (compressed) ---
+chunks=9 total_compressed=195343B
+--- Sitemap ---
+size_time=1512570 0.878718 urls=6615 doc_urls=0
+--- Unbounded URL (crawler trap) ---
+  /doc/Berakhot/129    200 verses=14
+  /doc/Berakhot/130    200 verses=14
+  /doc/Berakhot/200    200 verses=14
+  /doc/Berakhot/999    200 verses=14
+  /doc/Berakhot/5000   200 verses=14
+--- npm audit ---
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force

@@ -8,7 +8,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "sync:sefaria": "tsx scripts/sync-sefaria-index.ts",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "audit:coverage": "tsx scripts/audit-coverage.ts"
   },
   "dependencies": {
     "dotenv": "17.3.1",

@@ -40,5 +40,9 @@ Thumbs.db
 # GitNexus local index
 /.gitnexus/
 
+# Regenerated audit/measurement scratch output (BASELINE snapshots are committed)
+/docs/coverage-report.md
+/docs/metrics-raw.txt
+
 # Local-only Claude Code config/skills
 /.claude/
