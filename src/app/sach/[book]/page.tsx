@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getBookIndex, getText } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
-import { toHebrewNumeral } from "@/lib/hebrew-numeral";
+import { resolveStructure, buildIntegerItems, findFirstReadableRef } from "@/lib/schema-resolver";
 
 export const revalidate = 43200;
 
@@ -34,26 +34,34 @@ export default async function BookPage({ params }: Props) {
     notFound();
   }
 
-  // Try to fetch the first section to derive chapter count if not exposed
-  let chapterCount =
-    index.lengths?.[0] ??
-    index.schema?.lengths?.[0] ??
-    0;
+  let structure = resolveStructure(index, title);
 
-  let firstSectionName = index.sectionNames?.[0] ?? index.schema?.sectionNames?.[0] ?? "Chương";
-  const heSectionNames = index.schema?.heSectionNames?.[0] ?? "";
-
-  if (!chapterCount) {
+  // Rare edge case: Sefaria's raw index exposed neither `schema.lengths` nor
+  // `schema.nodes`. Fall back to fetching the bare title, mirroring the
+  // pre-existing rescue path, so this book still gets an integer-style TOC
+  // instead of a dead end.
+  if (structure.kind === "unknown") {
     try {
       const first = await getText(title);
-      chapterCount = first.lengths?.[0] ?? first.length ?? 0;
-      if (!firstSectionName || firstSectionName === "Chương") {
-        firstSectionName = first.sectionNames?.[0] ?? "Chương";
+      const len = first.lengths?.[0] ?? first.length ?? 0;
+      if (len > 0) {
+        structure = buildIntegerItems(title, len, first.sectionNames?.[0] ?? "Chương");
       }
     } catch {
-      chapterCount = 0;
+      // leave structure as "unknown" — the fallback message below covers it
     }
   }
+
+  const chapterCount = structure.items.length;
+  const firstSectionName = structure.unitName;
+
+  // The structurally-first section (e.g. daf 2a) is sometimes genuinely empty
+  // in Sefaria's data (sparse commentaries) — follow `next` to real content so
+  // "Đọc từ đầu" never lands on a blank page.
+  const readableFirst = await findFirstReadableRef(structure, getText);
+  const startHref = readableFirst
+    ? `/doc/${encodeURIComponent(title)}/${encodeURIComponent(readableFirst.segment)}`
+    : null;
 
   const vi = viBook(title);
   const label = vi?.name ?? title;
@@ -125,14 +133,12 @@ export default async function BookPage({ params }: Props) {
           </p>
           <p className="text-xs text-parchment/60">
             {firstSectionName}
-            {heSectionNames && ` · ${heSectionNames}`}
           </p>
-          <Link
-            href={`/doc/${encodeURIComponent(title)}/1`}
-            className="btn-gold mt-4 !py-2 !text-xs"
-          >
-            Đọc từ đầu
-          </Link>
+          {startHref && (
+            <Link href={startHref} className="btn-gold mt-4 !py-2 !text-xs">
+              Đọc từ đầu
+            </Link>
+          )}
         </div>
       </header>
 
@@ -143,22 +149,25 @@ export default async function BookPage({ params }: Props) {
           Mục lục <span className="text-gradient-gold">{firstSectionName}</span>
         </h2>
 
-        {chapterCount > 0 ? (
+        {structure.items.length > 0 ? (
           <ul className="grid gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {Array.from({ length: chapterCount }, (_, i) => i + 1).map((ch) => (
-              <li key={ch}>
+            {structure.items.map((item) => (
+              <li key={item.segment}>
                 <Link
-                  href={`/doc/${encodeURIComponent(title)}/${ch}`}
-                  className="glass card-3d group flex aspect-[4/5] flex-col items-center justify-center rounded-2xl text-center transition"
+                  href={`/doc/${encodeURIComponent(title)}/${encodeURIComponent(item.segment)}`}
+                  className="glass card-3d group flex aspect-[4/5] flex-col items-center justify-center gap-1 rounded-2xl p-2 text-center transition"
                 >
-                  <span className="font-hebrew text-3xl text-[#d4af37]/70 transition group-hover:text-[#d4af37]">
-                    {toHebrewNumeral(ch)}
-                  </span>
-                  <span className="mt-2 font-display text-2xl text-parchment">
-                    {ch}
-                  </span>
-                  <span className="mt-1 text-[10px] uppercase tracking-[0.24em] text-parchment/50">
-                    {firstSectionName}
+                  {item.heLabel && (
+                    <span
+                      className="font-hebrew text-2xl text-[#d4af37]/70 transition group-hover:text-[#d4af37]"
+                      dir="rtl"
+                      lang="he"
+                    >
+                      {item.heLabel}
+                    </span>
+                  )}
+                  <span className="font-display text-lg text-parchment">
+                    {item.label}
                   </span>
                 </Link>
               </li>
@@ -166,14 +175,11 @@ export default async function BookPage({ params }: Props) {
           </ul>
         ) : (
           <p className="glass rounded-2xl p-6 text-center text-parchment/70">
-            Bộ sách này có cấu trúc phức tạp. Hãy mở{" "}
-            <Link
-              href={`/doc/${encodeURIComponent(title)}/1`}
-              className="text-[#d4af37] underline"
-            >
-              phần đầu tiên
+            Sách này chưa xác định được cấu trúc chương/mục từ Sefaria. Hãy quay lại{" "}
+            <Link href="/thu-vien" className="text-[#d4af37] underline">
+              thư viện
             </Link>{" "}
-            và điều hướng bằng nút “tiếp / trước” trong trình đọc.
+            để chọn một cuốn khác.
           </p>
         )}
       </section>

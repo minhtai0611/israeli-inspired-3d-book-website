@@ -38,7 +38,7 @@ export function ReaderView({
   verses,
 }: {
   book: string;
-  chapter: number;
+  chapter: string;
   label: string;
   heTitle: string;
   verses: Verse[];

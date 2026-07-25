@@ -9,8 +9,9 @@ export type SefariaText = {
   book: string;
   heTitle?: string;
   title?: string;
-  text: string[] | string[][];
-  he: string[] | string[][];
+  /** A fully-specified single-verse ref (e.g. "Genesis 1:5") returns a plain string. */
+  text: string | string[] | string[][];
+  he: string | string[] | string[][];
   next: string | null;
   prev: string | null;
   sectionNames: string[];
@@ -73,6 +74,16 @@ export async function getText(ref: string): Promise<SefariaText> {
   return sefariaFetch<SefariaText>(`/texts/${encoded}?context=0&commentary=0`, 60 * 60 * 12);
 }
 
+/** A node in a "complex" work's schema tree (e.g. Zohar, Guide for the Perplexed). */
+export type SchemaNode = {
+  /** Canonical ref segment for this node, e.g. "Introduction". Real API responses use this, not `title`. */
+  key?: string;
+  /** Rarely present; kept only as a defensive fallback. */
+  title?: string;
+  titles?: { lang: string; text: string; primary?: boolean }[];
+  nodes?: SchemaNode[];
+};
+
 export type BookIndex = {
   title: string;
   heTitle: string;
@@ -83,6 +94,8 @@ export type BookIndex = {
     sectionNames?: string[];
     heSectionNames?: string[];
     addressTypes?: string[];
+    /** Present on "complex" works (e.g. Zohar, Guide for the Perplexed) instead of `lengths`. */
+    nodes?: SchemaNode[];
   };
   lengths?: number[];
   authors?: { en: string; he: string }[];

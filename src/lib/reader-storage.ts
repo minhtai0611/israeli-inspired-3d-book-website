@@ -18,7 +18,8 @@ export const DEFAULT_READER_PREFS: ReaderPrefs = {
 
 export type HistoryEntry = {
   book: string;
-  chapter: number;
+  /** URL segment, e.g. "5", "2a" (Talmud daf), or "Introduction" (complex-schema section) — not always numeric. */
+  chapter: string;
   label: string;
   heTitle: string;
   visitedAt: number;

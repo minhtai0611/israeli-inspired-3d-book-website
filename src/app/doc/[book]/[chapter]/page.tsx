@@ -4,24 +4,40 @@ import { notFound } from "next/navigation";
 import { cleanText, flatten, getText } from "@/lib/sefaria";
 import { viBook } from "@/lib/vi";
 import { ReaderView } from "@/components/reader/ReaderView";
+import { buildRef } from "@/lib/schema-resolver";
+
+/**
+ * Sefaria's own `data.sectionNames[0]` would give the precise unit name, but
+ * that needs a request round-trip; the URL segment's own shape is enough to
+ * tell integer chapters, Talmud daf, and named complex sections apart without
+ * another fetch, and without changing the label for the already-correct
+ * integer case.
+ */
+function unitLabelFor(segment: string): string {
+  if (/^\d+[ab]$/i.test(segment)) return "Daf";
+  if (/^\d+$/.test(segment)) return "Chương";
+  return "Phần";
+}
 
 export const revalidate = 43200;
 
 type Props = { params: Promise<{ book: string; chapter: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { book, chapter } = await params;
+  const { book, chapter: rawChapter } = await params;
   const title = decodeURIComponent(book);
+  const chapter = decodeURIComponent(rawChapter);
   const vi = viBook(title);
   const label = vi?.name ?? title;
+  const unit = unitLabelFor(chapter);
   return {
-    title: `${label} — Chương ${chapter}`,
-    description: `Đọc toàn văn ${label} chương ${chapter}, song ngữ Hebrew (מקרא על פי המסורה) và Anh, cung cấp bởi Sefaria.`,
+    title: `${label} — ${unit} ${chapter}`,
+    description: `Đọc toàn văn ${label} ${unit.toLowerCase()} ${chapter}, song ngữ Hebrew (מקרא על פי המסורה) và Anh, cung cấp bởi Sefaria.`,
     alternates: {
-      canonical: `/doc/${encodeURIComponent(title)}/${chapter}`,
+      canonical: `/doc/${encodeURIComponent(title)}/${encodeURIComponent(chapter)}`,
     },
     openGraph: {
-      title: `${label} · Chương ${chapter} — Sifria`,
+      title: `${label} · ${unit} ${chapter} — Sifria`,
       description: vi?.blurb,
       type: "article",
     },
@@ -29,9 +45,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ReaderPage({ params }: Props) {
-  const { book, chapter } = await params;
+  const { book, chapter: rawChapter } = await params;
   const title = decodeURIComponent(book);
-  const ref = `${title} ${chapter}`;
+  const chapter = decodeURIComponent(rawChapter);
+  const ref = buildRef(title, chapter);
 
   let data;
   try {
@@ -40,8 +57,12 @@ export default async function ReaderPage({ params }: Props) {
     notFound();
   }
 
-  const enLines = flatten(data.text).map(cleanText);
-  const heLines = flatten(data.he).map(cleanText);
+  // A fully-specified single-verse ref (e.g. "... 1:2" — can happen via the
+  // "Đọc từ đầu" lookahead skipping past empty sections) returns a plain
+  // string instead of an array; normalize before flattening.
+  const asArray = (v: string | string[] | string[][]): string[] | string[][] => (Array.isArray(v) ? v : [v]);
+  const enLines = flatten(asArray(data.text)).map(cleanText);
+  const heLines = flatten(asArray(data.he)).map(cleanText);
   const max = Math.max(enLines.length, heLines.length);
   const verses = Array.from({ length: max }, (_, i) => ({
     n: i + 1,
@@ -51,7 +72,8 @@ export default async function ReaderPage({ params }: Props) {
 
   const vi = viBook(title);
   const label = vi?.name ?? title;
-  const chapterNum = Number(chapter);
+  const unitLabel = unitLabelFor(chapter);
+  const chapterIsNumeric = /^\d+$/.test(chapter);
 
   const prevRef = data.prev; // e.g., "Genesis 1"
   const nextRef = data.next;
@@ -77,8 +99,8 @@ export default async function ReaderPage({ params }: Props) {
       name: label,
       alternateName: data.heIndexTitle,
     },
-    name: `${label} · Chương ${chapterNum}`,
-    position: chapterNum,
+    name: `${label} · ${unitLabel} ${chapter}`,
+    position: chapterIsNumeric ? Number(chapter) : undefined,
     inLanguage: ["he", "en"],
     text: enLines.slice(0, 4).join(" "),
   };
@@ -105,7 +127,7 @@ export default async function ReaderPage({ params }: Props) {
             {label}
           </Link>
         </div>
-        <span className="text-[#d4af37]">Chương {chapterNum}</span>
+        <span className="text-[#d4af37]">{unitLabel} {chapter}</span>
       </nav>
 
       <header className="rise mb-6 text-center">
@@ -114,7 +136,7 @@ export default async function ReaderPage({ params }: Props) {
         </p>
         <h1 className="mt-2 font-display text-4xl sm:text-5xl">
           <span className="text-gradient-gold">{label}</span>{" "}
-          <span className="text-parchment">· Chương {chapterNum}</span>
+          <span className="text-parchment">· {unitLabel} {chapter}</span>
         </h1>
         <p className="mt-2 text-xs uppercase tracking-[0.28em] text-parchment/60">
           {verses.length} câu · Song ngữ Hebrew / English
@@ -123,7 +145,7 @@ export default async function ReaderPage({ params }: Props) {
 
       <div className="divider-ornate mb-8" />
 
-      <ReaderView book={title} chapter={chapterNum} label={label} heTitle={data.heIndexTitle} verses={verses} />
+      <ReaderView book={title} chapter={chapter} label={label} heTitle={data.heIndexTitle} verses={verses} />
 
       <p className="mt-6 text-center text-[11px] italic text-parchment/50">
         Bản Hebrew: <em>Miqra according to the Masorah</em> (CC-BY-SA) · Bản dịch Anh:{" "}

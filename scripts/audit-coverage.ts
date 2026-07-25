@@ -1,6 +1,9 @@
 /**
  * Measures the share of books that are actually readable through the primary
- * user path: /sach/{title} -> "read from start" -> /doc/{title}/1.
+ * user path: /sach/{title} -> click "Đọc từ đầu" -> /doc/{title}/{firstSegment}.
+ * The first-chapter segment is extracted from the "Đọc từ đầu" link's real
+ * href rather than assumed to be "1" — Talmud books start at daf "2a" and
+ * complex-schema books (e.g. Zohar) start at a named section, not a number.
  * Uses a fixed-seed PRNG (not Math.random) so the sample is reproducible.
  *
  * Usage: npx tsx scripts/audit-coverage.ts [baseUrl] [sampleSize]
@@ -24,10 +27,38 @@ function rng(seed: number) {
   };
 }
 
+/** A real browser HTML-decodes href attributes before navigating; this regex-based extractor must too. */
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function regexEscape(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Builds a regex matching this book's own first /doc href in its /sach page.
+ * `encodeURIComponent` leaves `. * ( ) ! ~ '` unescaped, so titles containing
+ * them (parens are common in commentary titles, e.g. "Tosefta Sotah
+ * (Lieberman)") need regex-escaping, and `'` also needs to match React's
+ * rendered `&#x27;`/`&#39;` HTML-entity form, not just the literal character.
+ */
+function hrefPatternFor(encodedTitle: string): RegExp {
+  const pattern = regexEscape(encodedTitle).replace(/'/g, "(?:&#x27;|&#39;|')");
+  return new RegExp(`href="(/doc/${pattern}/[^"]*)"`);
+}
+
 type Row = {
   title: string;
   category: string;
   sachStatus: number;
+  firstHref: string | null;
   docStatus: number;
   verses: number;
   ok: boolean;
@@ -48,13 +79,18 @@ async function main() {
     const batch = sample.slice(i, i + CHUNK).map(async (b) => {
       const enc = encodeURIComponent(b.title);
       const s = await fetch(`${BASE}/sach/${enc}`).catch(() => null);
-      const d = await fetch(`${BASE}/doc/${enc}/1`).catch(() => null);
+      const sachHtml = s && s.ok ? await s.text() : "";
+      const rawHref = hrefPatternFor(enc).exec(sachHtml)?.[1] ?? null;
+      const firstHref = rawHref ? decodeHtmlEntities(rawHref) : null;
+
+      const d = firstHref ? await fetch(`${BASE}${firstHref}`).catch(() => null) : null;
       const html = d && d.ok ? await d.text() : "";
       const verses = (html.match(/class="verse /g) ?? []).length;
       rows.push({
         title: b.title,
         category: b.categoryPath[0] ?? "?",
         sachStatus: s?.status ?? 0,
+        firstHref,
         docStatus: d?.status ?? 0,
         verses,
         ok: d?.status === 200 && verses > 0,
@@ -92,11 +128,11 @@ async function main() {
     ``,
     `## Broken`,
     ``,
-    `| Book | Collection | /sach | /doc/1 | Verses |`,
-    `|---|---|---|---|---|`,
+    `| Book | Collection | /sach | First-chapter href | status | Verses |`,
+    `|---|---|---|---|---|---|`,
     ...rows
       .filter((r) => !r.ok)
-      .map((r) => `| ${r.title} | ${r.category} | ${r.sachStatus} | ${r.docStatus} | ${r.verses} |`),
+      .map((r) => `| ${r.title} | ${r.category} | ${r.sachStatus} | ${r.firstHref ?? "(none)"} | ${r.docStatus} | ${r.verses} |`),
   ].join("\n");
 
   writeFileSync("docs/coverage-report.md", md);
