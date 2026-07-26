@@ -4,8 +4,17 @@ import { notFound } from "next/navigation";
 import { getBookIndex, getText } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
 import { resolveStructure, buildIntegerItems, findFirstReadableRef } from "@/lib/schema-resolver";
+import { POPULAR_BOOKS } from "@/lib/popular-books";
 
 export const revalidate = 43200;
+// Everything outside POPULAR_BOOKS still renders on-demand and is cached
+// after its first request (ISR) — this only pins the highest-traffic titles
+// to build time so they're served from the CDN immediately.
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return POPULAR_BOOKS.map(([title]) => ({ book: encodeURIComponent(title) }));
+}
 
 type Props = { params: Promise<{ book: string }> };
 

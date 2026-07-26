@@ -5,6 +5,7 @@ import { cleanText, flatten, getText, SefariaNotFoundError } from "@/lib/sefaria
 import { viBook } from "@/lib/vi";
 import { ReaderView } from "@/components/reader/ReaderView";
 import { buildRef, isRefRefinement } from "@/lib/schema-resolver";
+import { POPULAR_BOOKS } from "@/lib/popular-books";
 
 /**
  * Sefaria's own `data.sectionNames[0]` would give the precise unit name, but
@@ -20,6 +21,20 @@ function unitLabelFor(segment: string): string {
 }
 
 export const revalidate = 43200;
+// Every other chapter still renders on-demand and is cached after its first
+// request (ISR) — this only pins the Torah + Psalms + five Megillot + Pirkei
+// Avot (all plain integer chapters, verified against the live API) to build
+// time, matching src/app/sach/[book]/page.tsx's own generateStaticParams.
+export const dynamicParams = true;
+
+export async function generateStaticParams() {
+  return POPULAR_BOOKS.flatMap(([title, chapterCount]) =>
+    Array.from({ length: chapterCount }, (_, i) => ({
+      book: encodeURIComponent(title),
+      chapter: String(i + 1),
+    })),
+  );
+}
 
 type Props = { params: Promise<{ book: string; chapter: string }> };
 
