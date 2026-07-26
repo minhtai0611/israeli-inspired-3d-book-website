@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getIndex } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
 import { flattenBooks, searchBooks } from "@/lib/library";
+import { getReadableBooksFromDb } from "@/lib/library-db";
 import { SearchForm } from "@/components/SearchForm";
 
 export const revalidate = 86400;
@@ -26,13 +27,18 @@ export default async function SearchPage({ searchParams }: Props) {
   let results: ReturnType<typeof searchBooks> = [];
   let error = false;
   if (trimmed) {
+    let books;
     try {
-      const nodes = await getIndex();
-      const books = flattenBooks(nodes);
-      results = searchBooks(books, trimmed);
+      books = await getReadableBooksFromDb();
+      if (books.length === 0) throw new Error("DB returned no readable books — sync may not have run yet");
     } catch {
-      error = true;
+      try {
+        books = flattenBooks(await getIndex());
+      } catch {
+        error = true;
+      }
     }
+    if (books) results = searchBooks(books, trimmed);
   }
 
   return (

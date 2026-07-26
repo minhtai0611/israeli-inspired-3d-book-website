@@ -1,10 +1,15 @@
 // Metadata/search foundation for mirroring the Sefaria index into Postgres, plus
-// anonymous (no-login) reader retention tables. None of this is wired to a live
-// connection here — /thu-vien, /sach, /doc, and /tim-kiem still read straight from
-// the Sefaria API. This is the schema + sync target described in the fix plan
-// (§4.6/§4.7): a foundation to build on once a synced dataset exists, not a
-// replacement for the live fetch path today.
+// anonymous (no-login) reader retention tables. /thu-vien, /thu-vien/[category],
+// and /tim-kiem read from `books`/`categories` here (src/lib/library-db.ts),
+// falling back to the live Sefaria index if the DB is unreachable or hasn't
+// been synced yet. /sach and /doc still read Sefaria directly per-request —
+// individual chapter/book-index content isn't mirrored, only the catalog
+// metadata used for browsing/search. See docs/db-sync.md and
+// scripts/sync-sefaria-index.ts / src/lib/sync-catalog.ts for how `books` gets
+// populated and verified. reading_history/reading_progress/bookmarks remain
+// unused placeholders — the shipped reader still uses localStorage directly.
 import {
+  boolean,
   integer,
   pgTable,
   serial,
@@ -35,6 +40,15 @@ export const books = pgTable("books", {
   nameVi: text("name_vi"),
   blurbVi: text("blurb_vi"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  /** Address scheme from src/lib/schema-resolver.ts's classifyAddressKind, e.g. "talmud". */
+  addressType: text("address_type", { enum: ["integer", "talmud", "complex", "unknown"] }),
+  /** First ref verified to have real content (findFirstReadableRef) — what "Đọc từ đầu" should use. */
+  firstValidRef: text("first_valid_ref"),
+  /** True once verifiedAt confirms firstValidRef resolves to non-empty content. */
+  isReadable: boolean("is_readable").notNull().default(false),
+  /** Number of top-level chapters/daf/named sections (resolveStructure(...).items.length). */
+  sectionCount: integer("section_count"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
 });
 
 export const bookAliases = pgTable(

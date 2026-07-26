@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getIndex, type IndexNode } from "@/lib/sefaria";
+import { getIndex } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
-import { categorySlug, flattenBooks, groupByCategory, sortCategories } from "@/lib/library";
+import { categorySlug, flattenBooks, groupByCategory, sortCategories, type FlatBook } from "@/lib/library";
+import { getReadableBooksFromDb } from "@/lib/library-db";
 
 export const revalidate = 86400;
 
@@ -14,15 +15,21 @@ export const metadata: Metadata = {
 };
 
 export default async function LibraryPage() {
-  let nodes: IndexNode[] = [];
+  let books: FlatBook[] = [];
   let error = false;
+  let usedLiveFallback = false;
   try {
-    nodes = await getIndex();
+    books = await getReadableBooksFromDb();
+    if (books.length === 0) throw new Error("DB returned no readable books — sync may not have run yet");
   } catch {
-    error = true;
+    try {
+      books = flattenBooks(await getIndex());
+      usedLiveFallback = true;
+    } catch {
+      error = true;
+    }
   }
 
-  const books = flattenBooks(nodes);
   const grouped = groupByCategory(books);
   const sorted = sortCategories([...grouped.entries()]);
   const totalBooks = books.length;
@@ -62,6 +69,11 @@ export default async function LibraryPage() {
         <div className="glass mb-10 rounded-2xl p-6 text-center text-parchment/80">
           Không thể tải chỉ mục từ Sefaria lúc này. Xin thử lại sau vài phút.
         </div>
+      )}
+      {usedLiveFallback && (
+        <p className="mb-10 text-center text-xs text-parchment/60">
+          Đang hiển thị dữ liệu trực tiếp từ Sefaria (cơ sở dữ liệu tạm thời không phản hồi).
+        </p>
       )}
 
       <div className="space-y-16">

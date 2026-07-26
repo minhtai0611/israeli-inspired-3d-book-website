@@ -11,6 +11,7 @@ import {
   searchBooks,
   type FlatBook,
 } from "@/lib/library";
+import { getReadableBooksFromDb } from "@/lib/library-db";
 
 export const revalidate = 86400;
 
@@ -22,11 +23,18 @@ type Props = {
 };
 
 async function loadCategory(slug: string) {
-  const nodes = await getIndex();
-  const books = flattenBooks(nodes);
+  let books: FlatBook[];
+  let usedLiveFallback = false;
+  try {
+    books = await getReadableBooksFromDb();
+    if (books.length === 0) throw new Error("DB returned no readable books — sync may not have run yet");
+  } catch {
+    books = flattenBooks(await getIndex());
+    usedLiveFallback = true;
+  }
   const grouped = groupByCategory(books);
   const category = categoryFromSlug(slug, [...grouped.keys()]);
-  return { category, list: category ? grouped.get(category) ?? [] : [] };
+  return { category, list: category ? grouped.get(category) ?? [] : [], usedLiveFallback };
 }
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
@@ -57,8 +65,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   let category: string | undefined;
   let list: FlatBook[] = [];
+  let usedLiveFallback = false;
   try {
-    ({ category, list } = await loadCategory(slug));
+    ({ category, list, usedLiveFallback } = await loadCategory(slug));
   } catch {
     notFound();
   }
@@ -116,6 +125,12 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       </div>
 
       <div className="divider-ornate mb-10" />
+
+      {usedLiveFallback && (
+        <p className="mb-8 text-center text-xs text-parchment/60">
+          Đang hiển thị dữ liệu trực tiếp từ Sefaria (cơ sở dữ liệu tạm thời không phản hồi).
+        </p>
+      )}
 
       <div className="mb-8 flex flex-wrap items-center gap-3">
         <form method="get" className="flex flex-1 min-w-[220px] items-center gap-2">

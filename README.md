@@ -26,8 +26,9 @@ itself is Hebrew/English, sourced from Sefaria as-is.
 
 - [Next.js 16](https://nextjs.org) (App Router) + React 19 + TypeScript
 - [Tailwind CSS v4](https://tailwindcss.com)
-- [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL — used by `/api/health`, and as a metadata/
-  search foundation (see `docs/db-sync.md`); the live UI still reads Sefaria directly today
+- [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL — `/thu-vien`, `/thu-vien/[category]`, and
+  `/tim-kiem` read the catalog from here (falling back to a live Sefaria fetch if the DB is
+  unreachable); see `docs/db-sync.md`. `/sach` and `/doc` still read Sefaria directly per request.
 - Content: [Sefaria](https://www.sefaria.org) Open API
 
 ## Getting started
@@ -35,8 +36,8 @@ itself is Hebrew/English, sourced from Sefaria as-is.
 ### Prerequisites
 
 - Node.js 20+
-- A PostgreSQL database (used by `/api/health`; also needed if you run the sync script in
-  `docs/db-sync.md`)
+- A PostgreSQL database (required to boot at all — see `src/db/index.ts`; browsing/search read
+  from it with a live-Sefaria fallback, see `docs/db-sync.md`)
 
 ### Setup
 
@@ -52,6 +53,10 @@ DATABASE_URL=postgresql://user:password@localhost:5432/app_db
 # Optional — only needed if you're serving from a custom domain. Falls back to the
 # Vercel deployment URL, then http://localhost:3000. See src/lib/site.ts.
 NEXT_PUBLIC_SITE_URL=https://your-domain.example
+
+# Required in production only, to authorize the weekly Vercel Cron re-sync
+# (see vercel.json + src/app/api/cron/sync/route.ts). Not needed locally.
+CRON_SECRET=
 ```
 
 Then start the dev server:
@@ -75,10 +80,11 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run test:cov`    | Run the unit suite with coverage                      |
 | `npm run audit:coverage` | Sample the catalog and measure real book readability (see `scripts/audit-coverage.ts`) |
 | `npm run db:push`     | Push `src/db/schema.ts` to `DATABASE_URL`             |
-| `npm run sync:sefaria`| Mirror the Sefaria index into Postgres — see `docs/db-sync.md` |
+| `npm run sync:sefaria`| Full catalog sync + per-book readability verification — see `docs/db-sync.md` |
 
 CI runs lint, typecheck, the unit suite, a production-dependency security audit, and a build on
-every push/PR — see `.github/workflows/ci.yml`.
+every push/PR — see `.github/workflows/ci.yml`. A weekly Vercel Cron (`vercel.json`) hits
+`/api/cron/sync` for a fast metadata-only refresh between full syncs.
 
 ## Project structure
 
@@ -86,18 +92,25 @@ every push/PR — see `.github/workflows/ci.yml`.
 src/
   app/
     page.tsx                    Home
-    thu-vien/                   Library: full category listing (page.tsx, [category]/)
+    thu-vien/                   Library: category listing (page.tsx, [category]/ — server-side
+                                 filter/sort/pagination via searchParams)
     tim-kiem/                   Search
-    sach/[book]/                Book table of contents
-    doc/[book]/[chapter]/       Reader
-    robots.ts, sitemap.ts, manifest.ts, layout.tsx   All derive their URL from lib/site.ts
+    sach/[book]/                Book table of contents (+ generateStaticParams for popular books)
+    doc/[book]/[chapter]/       Reader (+ generateStaticParams for popular chapters, opengraph-image.tsx)
+    api/health/, api/cron/sync/ DB health check; weekly catalog metadata refresh
+    robots.ts, sitemap.ts, opengraph-image.tsx, manifest.ts, layout.tsx
+                                 All derive their URL from lib/site.ts
   components/
     reader/                     ReaderView (controls, verse copy-link), ContinueReading
-    library/                    CategoryBrowser (client-side filter/sort/load-more)
     SearchForm.tsx, SiteHeader.tsx, SiteFooter.tsx, HeroOrbit.tsx, HebrewMarquee.tsx
   lib/
     sefaria.ts                  Sefaria API client (index/book/text fetching, HTML cleanup)
-    library.ts                  Shared index-flattening/grouping/search helpers
+    schema-resolver.ts          Resolves Sefaria's 3 address schemes (integer/Talmud daf/complex)
+    library.ts                  Shared index-flattening/grouping/search helpers (live-fetch source)
+    library-db.ts               Same FlatBook[] shape, sourced from Postgres (browsing/search)
+    sync-catalog.ts             Shared sync logic: fast metadata-only vs. slow full-verification
+    hebrew-numeral.ts           Hebrew numeral formatting (chapter/daf labels)
+    popular-books.ts            Torah + Psalms + 5 Megillot + Pirkei Avot — the prerendered set
     reader-storage.ts           localStorage-backed reader prefs + history (useSyncExternalStore)
     site.ts                     SITE_URL — single source of truth for every canonical/robots/
                                  sitemap/JSON-LD URL
@@ -105,9 +118,11 @@ src/
   db/
     schema.ts                   categories/books/book_aliases/sync_runs/reading_*/bookmarks
 scripts/
-  sync-sefaria-index.ts         Mirrors the Sefaria index into the tables above
+  audit-coverage.ts             Samples the catalog and measures real book readability
+  sync-sefaria-index.ts         CLI wrapper around sync-catalog.ts's full verification sync
 docs/
-  db-sync.md                    How the sync script works, what's wired up vs. foundation-only
+  db-sync.md                    How the two sync modes work, what's DB-backed vs. still live
+  a11y.md                       Accessibility checklist — what was checked and how
 ```
 
 ## Deployment
