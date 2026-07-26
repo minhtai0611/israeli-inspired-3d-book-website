@@ -35,7 +35,6 @@ Thumbs.db
 /CLAUDE.md
 /AGENTS.md
 /CHANGELOG.md
-/docs/adr/
 
 # GitNexus local index
 /.gitnexus/
@@ -43,6 +42,15 @@ Thumbs.db
 # Regenerated audit/measurement scratch output (BASELINE snapshots are committed)
 /docs/coverage-report.md
 /docs/metrics-raw.txt
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Lighthouse CI
+/.lighthouseci/
 
 # Local-only Claude Code config/skills
 /.claude/

@@ -13,13 +13,19 @@ itself is Hebrew/English, sourced from Sefaria as-is.
 
 ## Features
 
-- Browse the full Sefaria catalog by category at `/thu-vien` and `/thu-vien/[category]` (filter,
-  sort A–Z, load-more — no 24-item dead end)
-- Search books by English/Hebrew/Vietnamese name at `/tim-kiem`
+- Browse the full Sefaria catalog by category at `/thu-vien` and `/thu-vien/[category]`
+  (server-side filter/sort/pagination via URL params — works with JavaScript disabled)
+- Search books by English/Hebrew/Vietnamese name at `/tim-kiem`, with diacritic-insensitive
+  Vietnamese matching ("thi thien" finds "Thi Thiên")
 - Reader controls at `/doc/[book]/[chapter]`: font size, line spacing, Hebrew/English/both
   toggle, per-verse copy-link (`#v12`-style deep links), all persisted per-browser
+- Correctly handles Sefaria's three chapter-addressing schemes (plain integer, Talmud daf, and
+  named complex sections like Zohar) — see `docs/adr/0001-schema-resolver.md`
 - "Continue reading" on the home page, from the same per-browser history
-- Reduced-motion support, skip-to-content link, visible focus outlines
+- Dynamic OG images, sitemap, BreadcrumbList JSON-LD for social sharing/SEO
+- `lang="he"`/`lang="en"` on all bilingual text, WCAG AA contrast, reduced-motion and
+  high-contrast media query support, skip-to-content link, visible focus outlines — see
+  `docs/a11y.md`
 - Security headers (CSP, HSTS, X-Frame-Options, etc.) — see `next.config.ts`
 
 ## Tech stack
@@ -30,6 +36,37 @@ itself is Hebrew/English, sourced from Sefaria as-is.
   `/tim-kiem` read the catalog from here (falling back to a live Sefaria fetch if the DB is
   unreachable); see `docs/db-sync.md`. `/sach` and `/doc` still read Sefaria directly per request.
 - Content: [Sefaria](https://www.sefaria.org) Open API
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Browser
+        U[User]
+    end
+    subgraph Vercel["Vercel (Next.js 16 App Router)"]
+        Browse["/thu-vien, /thu-vien/[category], /tim-kiem"]
+        Read["/sach/[book], /doc/[book]/[chapter]"]
+        Cron["/api/cron/sync (weekly, CRON_SECRET)"]
+        Health["/api/health"]
+    end
+    subgraph Neon["Neon Postgres"]
+        DB[(categories / books / book_aliases)]
+    end
+    Sefaria["Sefaria Open API"]
+
+    U --> Browse
+    U --> Read
+    Browse -- "catalog read (fallback: live fetch)" --> DB
+    Read -- "book TOC + chapter text, always live" --> Sefaria
+    Cron -- "fast metadata-only refresh" --> Sefaria
+    Cron -- "upsert" --> DB
+    Health -- "lastSync, readableCount" --> DB
+```
+
+`npm run sync:sefaria` (manual CLI, not on Vercel — see `docs/db-sync.md`) runs the slow full
+catalog sync with per-book readability verification (~26 min for 6,598 books); the Vercel Cron
+above only does the fast metadata-only refresh, since Vercel Functions can't run that long.
 
 ## Getting started
 
@@ -78,13 +115,16 @@ Open [http://localhost:3000](http://localhost:3000).
 | `npm run typecheck`   | Type-check with `tsc --noEmit`                       |
 | `npm run test`        | Run the Vitest unit suite                             |
 | `npm run test:cov`    | Run the unit suite with coverage                      |
+| `npm run test:e2e`    | Run the Playwright E2E suite (`tests/e2e/`) against a local production build |
 | `npm run audit:coverage` | Sample the catalog and measure real book readability (see `scripts/audit-coverage.ts`) |
 | `npm run db:push`     | Push `src/db/schema.ts` to `DATABASE_URL`             |
 | `npm run sync:sefaria`| Full catalog sync + per-book readability verification — see `docs/db-sync.md` |
 
 CI runs lint, typecheck, the unit suite, a production-dependency security audit, and a build on
 every push/PR — see `.github/workflows/ci.yml`. A weekly Vercel Cron (`vercel.json`) hits
-`/api/cron/sync` for a fast metadata-only refresh between full syncs.
+`/api/cron/sync` for a fast metadata-only refresh between full syncs. E2E (`npm run test:e2e`) and
+Lighthouse (`npx lhci autorun`, config in `.lighthouserc.json`) are run manually, not in CI — both
+need a full production build + server running locally.
 
 ## Project structure
 
@@ -120,10 +160,35 @@ src/
 scripts/
   audit-coverage.ts             Samples the catalog and measures real book readability
   sync-sefaria-index.ts         CLI wrapper around sync-catalog.ts's full verification sync
+tests/
+  unit/                         Vitest unit tests
+  e2e/                           Playwright E2E tests (reader.spec.ts) — see playwright.config.ts
 docs/
   db-sync.md                    How the two sync modes work, what's DB-backed vs. still live
   a11y.md                       Accessibility checklist — what was checked and how
+  adr/                           Architecture Decision Records (0001-schema-resolver,
+                                 0002-postgres-mirror, 0003-server-side-pagination)
 ```
+
+## Measured results
+
+Real numbers from this project's 2026 remediation effort — not estimates. Methodology and full
+context for each row is in the linked ADR/doc.
+
+| Metric | Before | After | Source |
+| --- | --- | --- | --- |
+| Book readability (200-title sample, real click-through) | 53.5% | 98.5% | `docs/adr/0001-schema-resolver.md` |
+| Production catalog sync (6,598 books, live) | — | 98.45% verified readable | `docs/db-sync.md` |
+| `/thu-vien/Halakhah` raw HTML (2,169-book category) | 555.9 KB | 72.4 KB | `docs/adr/0003-server-side-pagination.md` |
+| Local TTFB, p50 | 640 ms | 4.9 ms | `scripts/measure.sh` baseline vs. after Phase 4 caching |
+| Lighthouse — `/` (Performance / A11y / Best Practices / SEO) | — | 77 / 98 / 100 / 100 | `.lighthouserc.json` |
+| Lighthouse — `/thu-vien` | — | 84 / 100 / 100 / 100 | `.lighthouserc.json` |
+| Lighthouse — `/doc/Genesis/1` | — | 88 / 98 / 100 / 100 | `.lighthouserc.json` |
+
+The Performance scores (77–88) are the main known gap — not addressed by this remediation, which
+focused on correctness (readability, 404 semantics), data volume, and SEO/a11y. Likely next targets
+are Sefaria fetch latency on cache-miss and unoptimized image/font loading, but that wasn't profiled
+here.
 
 ## Deployment
 
