@@ -13,7 +13,7 @@ export function SiteFooter() {
             Kabbalah, Thi thiên… với giao diện tiếng Việt, toàn văn song ngữ Hebrew &amp;
             Anh, dưới ánh sáng của menorah bảy nhánh.
           </p>
-          <p className="mt-4 text-xs text-parchment/50">
+          <p className="mt-4 text-xs text-parchment/60">
             Toàn bộ nội dung sách được cung cấp qua{" "}
             <a
               href="https://developers.sefaria.org/"
@@ -67,7 +67,7 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-[#d4af37]/10 py-4 text-center text-xs text-parchment/50">
+      <div className="border-t border-[#d4af37]/10 py-4 text-center text-xs text-parchment/60">
         © {new Date().getFullYear()} Sifria · סִפְרִיָּה — “Or chadash al Tsion ta’ir” · Xây bằng lòng
         kính tôn dành cho di sản Israel.
       </div>

@@ -32,7 +32,7 @@ export function ContinueReading() {
             className="glass card-3d block w-56 flex-shrink-0 rounded-2xl p-4"
           >
             <div className="card-inner">
-              <p className="font-hebrew text-lg text-[#d4af37]" dir="rtl">
+              <p className="font-hebrew text-lg text-[#d4af37]" dir="rtl" lang="he">
                 {h.heTitle}
               </p>
               <p className="mt-1 font-display text-lg text-parchment">

@@ -129,7 +129,7 @@ export default async function BookPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <nav className="mb-6 text-xs uppercase tracking-[0.28em] text-parchment/50">
+      <nav className="mb-6 text-xs uppercase tracking-[0.28em] text-parchment/60">
         <Link href="/" className="hover:text-[#d4af37]">Trang chủ</Link>
         <span className="mx-2">/</span>
         <Link href="/thu-vien" className="hover:text-[#d4af37]">Thư viện</Link>
@@ -143,7 +143,7 @@ export default async function BookPage({ params }: Props) {
 
       <header className="rise mb-10 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
         <div>
-          <p className="font-hebrew text-3xl text-[#d4af37]" dir="rtl">
+          <p className="font-hebrew text-3xl text-[#d4af37]" dir="rtl" lang="he">
             {index.heTitle}
           </p>
           <h1 className="mt-2 font-display text-5xl sm:text-6xl">

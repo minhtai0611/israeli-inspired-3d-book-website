@@ -92,7 +92,7 @@ export default async function SearchPage({ searchParams }: Props) {
                       <p className="text-[10px] uppercase tracking-[0.28em] text-[#d4af37]/70">
                         {cat.name}
                       </p>
-                      <p className="font-hebrew mt-1 text-2xl text-[#d4af37]" dir="rtl">
+                      <p className="font-hebrew mt-1 text-2xl text-[#d4af37]" dir="rtl" lang="he">
                         {b.heTitle}
                       </p>
                       <h3 className="mt-1 font-display text-xl text-parchment">

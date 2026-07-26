@@ -103,6 +103,7 @@ export default async function LibraryPage() {
                         <p
                           className="font-hebrew text-2xl text-[#d4af37]"
                           dir="rtl"
+                          lang="he"
                         >
                           {b.heTitle}
                         </p>
@@ -124,7 +125,7 @@ export default async function LibraryPage() {
               </div>
 
               {list.length > visible.length && (
-                <p className="mt-4 text-center text-xs text-parchment/50">
+                <p className="mt-4 text-center text-xs text-parchment/60">
                   <Link
                     href={`/thu-vien/${categorySlug(cat)}`}
                     className="text-[#d4af37] underline decoration-[#d4af37]/40 underline-offset-2"

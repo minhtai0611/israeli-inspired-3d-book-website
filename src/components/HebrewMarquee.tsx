@@ -6,7 +6,7 @@ const LETTERS = [
 export function HebrewMarquee() {
   const row = [...LETTERS, ...LETTERS];
   return (
-    <div className="pointer-events-none relative overflow-hidden py-6">
+    <div aria-hidden="true" className="pointer-events-none relative overflow-hidden py-6">
       <div className="marquee flex gap-10 whitespace-nowrap font-hebrew text-3xl text-[#d4af37]/40">
         {row.map((l, i) => (
           <span key={i} className="inline-flex items-center gap-10">

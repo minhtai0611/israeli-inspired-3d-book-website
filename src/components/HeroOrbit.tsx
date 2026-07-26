@@ -3,7 +3,7 @@
 
 export function HeroOrbit() {
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[520px]">
+    <div aria-hidden="true" className="relative mx-auto aspect-square w-full max-w-[520px]">
       {/* glow */}
       <div className="absolute inset-8 rounded-full bg-[radial-gradient(circle_at_50%_40%,rgba(212,175,55,.55),transparent_60%)] blur-2xl" />
 

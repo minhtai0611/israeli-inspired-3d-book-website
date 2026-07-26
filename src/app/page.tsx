@@ -126,7 +126,7 @@ export default async function HomePage() {
               key={i}
               className="glass rounded-3xl p-6 text-center"
             >
-              <p className="font-hebrew text-2xl text-[#f2d47a]" dir="rtl">
+              <p className="font-hebrew text-2xl text-[#f2d47a]" dir="rtl" lang="he">
                 {q.he}
               </p>
               <p className="mt-3 font-serif text-lg italic text-parchment/85">

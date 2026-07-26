@@ -96,7 +96,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-24 pt-14 sm:px-6 lg:px-10">
-      <nav className="mb-6 text-xs uppercase tracking-[0.28em] text-parchment/50">
+      <nav className="mb-6 text-xs uppercase tracking-[0.28em] text-parchment/60">
         <Link href="/" className="hover:text-[#d4af37]">Trang chủ</Link>
         <span className="mx-2">/</span>
         <Link href="/thu-vien" className="hover:text-[#d4af37]">Thư viện</Link>
@@ -127,7 +127,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               name="q"
               defaultValue={trimmedQ}
               placeholder="Tìm theo tên sách…"
-              className="w-full rounded-full border border-[#d4af37]/30 bg-[#0b1220]/60 px-5 py-2.5 text-sm text-parchment placeholder:text-parchment/40 focus-visible:border-[#d4af37]"
+              className="w-full rounded-full border border-[#d4af37]/30 bg-[#0b1220]/60 px-5 py-2.5 text-sm text-parchment placeholder:text-parchment/60 focus-visible:border-[#d4af37]"
             />
           </label>
           <button type="submit" className="btn-outline text-xs !py-2">
@@ -141,7 +141,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         >
           {sortAz ? "✓ Sắp xếp A–Z" : "Sắp xếp A–Z"}
         </Link>
-        <span className="text-xs uppercase tracking-[0.2em] text-parchment/50">
+        <span className="text-xs uppercase tracking-[0.2em] text-parchment/60">
           {filtered.length} / {list.length} tác phẩm
         </span>
       </div>
@@ -191,7 +191,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           ) : (
             <span />
           )}
-          <span className="text-xs uppercase tracking-[0.2em] text-parchment/50">
+          <span className="text-xs uppercase tracking-[0.2em] text-parchment/60">
             Trang {currentPage} / {totalPages}
           </span>
           {currentPage < totalPages && (

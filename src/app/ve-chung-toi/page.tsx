@@ -58,7 +58,7 @@ export default function AboutPage() {
           người trên hành tinh này có thể đọc miễn phí. Chúng tôi chỉ mượn ánh
           sáng của họ mà thắp lên một cây nến nhỏ.
         </p>
-        <p className="mt-8 text-right font-hebrew text-2xl text-[#d4af37]" dir="rtl">
+        <p className="mt-8 text-right font-hebrew text-2xl text-[#d4af37]" dir="rtl" lang="he">
           אוֹר חָדָשׁ עַל צִיּוֹן תָּאִיר
         </p>
         <p className="text-right text-sm italic text-parchment/60">

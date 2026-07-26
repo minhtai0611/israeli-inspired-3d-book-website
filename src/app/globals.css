@@ -113,6 +113,15 @@ body::after {
   .card-3d:hover { transform: none !important; }
 }
 
+/* --- Accessibility: boost contrast when the OS requests it --- */
+@media (prefers-contrast: more) {
+  .glass { background: #0b1220; border-color: #d4af37; }
+  .text-parchment\/60, .text-parchment\/65, .text-parchment\/70,
+  .text-parchment\/75, .text-parchment\/80, .text-parchment\/85, .text-parchment\/90 {
+    color: var(--parchment) !important;
+  }
+}
+
 /* --- Typography helpers --- */
 .font-hebrew { font-family: var(--font-frank), "Frank Ruhl Libre", "Times New Roman", serif; }
 .font-serif { font-family: var(--font-cormorant), serif; }

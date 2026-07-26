@@ -22,8 +22,8 @@ export function SearchForm({
           placeholder="Tìm tên sách… (Genesis, Thi Thiên…)"
           className={
             compact
-              ? "w-40 rounded-full border border-[#d4af37]/25 bg-[#0b1220]/60 px-4 py-1.5 text-sm text-parchment placeholder:text-parchment/40 focus-visible:border-[#d4af37] sm:w-56"
-              : "w-full rounded-full border border-[#d4af37]/30 bg-[#0b1220]/60 px-5 py-3 text-base text-parchment placeholder:text-parchment/40 focus-visible:border-[#d4af37]"
+              ? "w-40 rounded-full border border-[#d4af37]/25 bg-[#0b1220]/60 px-4 py-1.5 text-sm text-parchment placeholder:text-parchment/60 focus-visible:border-[#d4af37] sm:w-56"
+              : "w-full rounded-full border border-[#d4af37]/30 bg-[#0b1220]/60 px-5 py-3 text-base text-parchment placeholder:text-parchment/60 focus-visible:border-[#d4af37]"
           }
         />
       </label>

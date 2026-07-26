@@ -165,7 +165,7 @@ export default async function ReaderPage({ params }: Props) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <nav className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.28em] text-parchment/50">
+      <nav className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.28em] text-parchment/60">
         <div>
           <Link href="/" className="hover:text-[#d4af37]">Trang chủ</Link>
           <span className="mx-2">/</span>
@@ -184,23 +184,23 @@ export default async function ReaderPage({ params }: Props) {
       </nav>
 
       <header className="rise mb-6 text-center">
-        <p className="font-hebrew text-2xl text-[#d4af37]" dir="rtl">
+        <p className="font-hebrew text-2xl text-[#d4af37]" dir="rtl" lang="he">
           {data.heRef}
         </p>
         <h1 className="mt-2 font-display text-4xl sm:text-5xl">
           <span className="text-gradient-gold">{label}</span>{" "}
           <span className="text-parchment">· {unitLabel} {chapter}</span>
         </h1>
-        <p className="mt-2 text-xs uppercase tracking-[0.28em] text-parchment/60">
+        <h2 className="mt-2 text-xs font-normal uppercase tracking-[0.28em] text-parchment/60">
           {verses.length} câu · Song ngữ Hebrew / English
-        </p>
+        </h2>
       </header>
 
       <div className="divider-ornate mb-8" />
 
       <ReaderView book={title} chapter={chapter} label={label} heTitle={data.heIndexTitle} verses={verses} />
 
-      <p className="mt-6 text-center text-[11px] italic text-parchment/50">
+      <p className="mt-6 text-center text-[11px] italic text-parchment/60">
         Bản Hebrew: <em>Miqra according to the Masorah</em> (CC-BY-SA) · Bản dịch Anh:{" "}
         {data.versionTitle ?? "JPS Tanakh"}. Cung cấp bởi{" "}
         <a

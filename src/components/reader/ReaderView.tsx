@@ -49,6 +49,7 @@ export function ReaderView({
     getReaderPrefsServerSnapshot,
   );
   const [copiedVerse, setCopiedVerse] = useState<number | null>(null);
+  const [copyMessage, setCopyMessage] = useState("");
   const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -65,15 +66,37 @@ export function ReaderView({
     setReaderPrefs({ ...prefs, ...partial });
   }
 
+  function markCopied(n: number) {
+    setCopiedVerse(n);
+    setCopyMessage(`Đã sao chép liên kết câu ${n}`);
+    if (copyTimeout.current) clearTimeout(copyTimeout.current);
+    copyTimeout.current = setTimeout(() => {
+      setCopiedVerse(null);
+      setCopyMessage("");
+    }, 1800);
+  }
+
   async function copyVerseLink(n: number) {
     const url = `${window.location.origin}${window.location.pathname}#v${n}`;
     try {
       await navigator.clipboard.writeText(url);
-      setCopiedVerse(n);
-      if (copyTimeout.current) clearTimeout(copyTimeout.current);
-      copyTimeout.current = setTimeout(() => setCopiedVerse(null), 1800);
+      markCopied(n);
     } catch {
-      // Clipboard API unavailable (e.g. insecure context) — silently ignore.
+      // Clipboard API unavailable (e.g. insecure context, older browser) — fall
+      // back to the classic textarea+execCommand trick before giving up.
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        markCopied(n);
+      } catch {
+        setCopyMessage("Trình duyệt không cho sao chép. Bạn hãy sao chép thủ công từ thanh địa chỉ.");
+      }
     }
   }
 
@@ -141,7 +164,11 @@ export function ReaderView({
             Đoạn này chưa có nội dung khả dụng qua API Sefaria.
           </p>
         ) : (
-          <ol className="space-y-1" style={{ fontSize: `${prefs.fontScale}em` }}>
+          <ol
+            className="space-y-1"
+            style={{ fontSize: `${prefs.fontScale}em` }}
+            aria-label={`Danh sách câu — ${label} ${chapter}`}
+          >
             {verses.map((v) => (
               <li key={v.n} className="verse group" id={`v${v.n}`}>
                 <span className="verse-num flex flex-col items-center gap-1">
@@ -149,7 +176,7 @@ export function ReaderView({
                   <button
                     type="button"
                     onClick={() => copyVerseLink(v.n)}
-                    className="text-[10px] leading-none text-[#a37d1a]/50 opacity-0 transition hover:text-[#a37d1a] focus-visible:opacity-100 group-hover:opacity-100"
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center text-[11px] leading-none text-[#6b4f0a] opacity-90 transition hover:opacity-100 focus-visible:opacity-100 group-hover:opacity-100 sm:min-h-0 sm:min-w-0"
                     aria-label={`Sao chép liên kết câu ${v.n}`}
                     title="Sao chép liên kết"
                   >
@@ -158,17 +185,23 @@ export function ReaderView({
                 </span>
                 <div className={LINE_SPACING_CLASS[prefs.lineSpacing]}>
                   {v.he && prefs.mode !== "en" && (
-                    <p className="verse-he" dir="rtl">
+                    <p className="verse-he" dir="rtl" lang="he">
                       {v.he}
                     </p>
                   )}
-                  {v.en && prefs.mode !== "he" && <p className="verse-en">{v.en}</p>}
+                  {v.en && prefs.mode !== "he" && (
+                    <p className="verse-en" lang="en">{v.en}</p>
+                  )}
                 </div>
               </li>
             ))}
           </ol>
         )}
       </article>
+
+      <p role="status" aria-live="polite" className="sr-only">
+        {copyMessage}
+      </p>
     </div>
   );
 }

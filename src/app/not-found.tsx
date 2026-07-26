@@ -3,7 +3,7 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-3xl flex-col items-center justify-center px-4 py-24 text-center">
-      <p className="font-hebrew text-6xl text-[#d4af37]/70" dir="rtl">לֹא נִמְצָא</p>
+      <p className="font-hebrew text-6xl text-[#d4af37]/70" dir="rtl" lang="he">לֹא נִמְצָא</p>
       <h1 className="mt-4 font-display text-5xl text-parchment">
         Trang này chưa xuất hiện trong <span className="text-gradient-gold">cuộn sách</span>
       </h1>
