@@ -44,13 +44,29 @@ export type IndexNode = {
   corpus?: string;
 };
 
+/** The ref/title genuinely doesn't exist in Sefaria — a real 404. */
+export class SefariaNotFoundError extends Error {}
+/** Sefaria itself is unreachable or erroring — NOT the same as not-found; callers must not
+ * treat this as "page doesn't exist" (that would get real content deindexed by search engines
+ * whenever the upstream API has a bad moment). */
+export class SefariaUpstreamError extends Error {}
+
 async function sefariaFetch<T>(path: string, revalidate = 60 * 60 * 6): Promise<T> {
-  const res = await fetch(`${SEFARIA_BASE}${path}`, {
-    next: { revalidate },
-    headers: { Accept: "application/json" },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${SEFARIA_BASE}${path}`, {
+      next: { revalidate },
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (e) {
+    throw new SefariaUpstreamError(`Network error fetching Sefaria ${path}: ${String(e)}`);
+  }
+  if (res.status === 404) {
+    throw new SefariaNotFoundError(`Sefaria API ${path} → 404`);
+  }
   if (!res.ok) {
-    throw new Error(`Sefaria API ${path} → ${res.status}`);
+    throw new SefariaUpstreamError(`Sefaria API ${path} → ${res.status}`);
   }
   const data = await res.json();
   // Sefaria returns HTTP 200 with `{ error: "..." }` for unknown titles/refs instead of a
@@ -59,7 +75,7 @@ async function sefariaFetch<T>(path: string, revalidate = 60 * 60 * 6): Promise<
   // and bogus/misspelled book or chapter URLs render as blank-but-real-looking pages instead
   // of the 404 they're meant to fall through to.
   if (data && typeof data === "object" && "error" in data) {
-    throw new Error(`Sefaria API ${path} → ${(data as { error: string }).error}`);
+    throw new SefariaNotFoundError(`Sefaria API ${path} → ${(data as { error: string }).error}`);
   }
   return data as T;
 }

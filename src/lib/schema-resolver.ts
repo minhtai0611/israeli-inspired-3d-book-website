@@ -150,6 +150,29 @@ export function isValidSegment(structure: ResolvedStructure, segment: string): b
   return structure.items.some((it) => it.segment === segment);
 }
 
+/**
+ * True if `echoed` (what Sefaria's API actually resolved the request to) is
+ * either exactly `requested`, or a deeper refinement of it (e.g. requesting
+ * the bare complex-schema node "Zohar, Introduction" legitimately echoes back
+ * "Zohar, Introduction 1" — Sefaria auto-resolving to the first section).
+ *
+ * False means Sefaria silently CLAMPED an out-of-range/invalid ref to some
+ * unrelated valid one instead of erroring — the exact mechanism behind the
+ * /doc/Berakhot/999 crawler-trap bug (999 clamps to "Berakhot 2a", a
+ * completely different ref, not a refinement of "Berakhot 999").
+ *
+ * Guards against the naive `startsWith` false-positive where "Genesis 5" is a
+ * literal string-prefix of "Genesis 50" by requiring the next character (if
+ * any) to be a separator, not a continuing digit.
+ */
+export function isRefRefinement(requested: string, echoed: string): boolean {
+  const r = requested.trim();
+  const e = echoed.trim();
+  if (r === e) return true;
+  if (!e.startsWith(r)) return false;
+  const nextChar = e[r.length];
+  return nextChar === " " || nextChar === "," || nextChar === ":";
+}
 
 /** Minimal shape of a Sefaria text response needed to find the first non-empty section. */
 export type TextLookupResult = {

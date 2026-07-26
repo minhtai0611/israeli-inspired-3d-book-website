@@ -6,6 +6,7 @@ import {
   buildRef,
   resolveStructure,
   isValidSegment,
+  isRefRefinement,
   findFirstReadableRef,
   type TextLookupResult,
 } from "@/lib/schema-resolver";
@@ -198,5 +199,29 @@ describe("isValidSegment — rejects made-up URLs", () => {
     const s = resolveStructure(GENESIS, "Genesis");
     expect(isValidSegment(s, "50")).toBe(true);
     expect(isValidSegment(s, "51")).toBe(false);
+  });
+});
+
+describe("isRefRefinement — detects Sefaria silently clamping an out-of-range ref", () => {
+  it("exact match is always a refinement", () => {
+    expect(isRefRefinement("Genesis 5", "Genesis 5")).toBe(true);
+  });
+
+  it("the crawler-trap bug: Berakhot 999 clamped to Berakhot 2a is NOT a refinement", () => {
+    expect(isRefRefinement("Berakhot 999", "Berakhot 2a")).toBe(false);
+    expect(isRefRefinement("Berakhot 5000", "Berakhot 2a")).toBe(false);
+  });
+
+  it("a bare complex-node ref auto-resolving to its first section IS a refinement", () => {
+    expect(isRefRefinement("Zohar, Introduction", "Zohar, Introduction 1")).toBe(true);
+    expect(isRefRefinement("Zohar, Addenda", "Zohar, Addenda, Volume I")).toBe(true);
+  });
+
+  it("does not false-positive on a numeric string prefix (5 vs 50)", () => {
+    expect(isRefRefinement("Genesis 5", "Genesis 50")).toBe(false);
+  });
+
+  it("an unrelated ref is not a refinement", () => {
+    expect(isRefRefinement("Genesis 51", "Exodus 1")).toBe(false);
   });
 });

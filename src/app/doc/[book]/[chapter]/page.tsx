@@ -1,10 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cleanText, flatten, getText } from "@/lib/sefaria";
+import { cleanText, flatten, getText, SefariaNotFoundError } from "@/lib/sefaria";
 import { viBook } from "@/lib/vi";
 import { ReaderView } from "@/components/reader/ReaderView";
-import { buildRef } from "@/lib/schema-resolver";
+import { buildRef, isRefRefinement } from "@/lib/schema-resolver";
 
 /**
  * Sefaria's own `data.sectionNames[0]` would give the precise unit name, but
@@ -53,9 +53,22 @@ export default async function ReaderPage({ params }: Props) {
   let data;
   try {
     data = await getText(ref);
-  } catch {
-    notFound();
+  } catch (e) {
+    // Only a genuine not-found becomes a 404. An upstream failure (Sefaria
+    // down/timed out) must NOT — that would look to search engines like the
+    // book itself no longer exists and get real content deindexed.
+    if (e instanceof SefariaNotFoundError) notFound();
+    throw e;
   }
+
+  // Sefaria sometimes accepts an out-of-range ref (e.g. "Berakhot 999") and
+  // silently CLAMPS it to some other valid ref instead of erroring — this is
+  // the crawler-trap bug where /doc/Berakhot/999, /5000, etc. all render the
+  // same content as a real chapter with a fabricated "canonical" URL. Reject
+  // anything Sefaria didn't resolve to the exact ref requested (or a deeper
+  // refinement of it, e.g. a bare complex-node ref auto-resolving to its
+  // first section).
+  if (!isRefRefinement(ref, data.ref)) notFound();
 
   // A fully-specified single-verse ref (e.g. "... 1:2" — can happen via the
   // "Đọc từ đầu" lookahead skipping past empty sections) returns a plain
