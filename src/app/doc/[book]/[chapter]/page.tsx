@@ -6,6 +6,7 @@ import { viBook } from "@/lib/vi";
 import { ReaderView } from "@/components/reader/ReaderView";
 import { buildRef, isRefRefinement } from "@/lib/schema-resolver";
 import { POPULAR_BOOKS } from "@/lib/popular-books";
+import { SITE_URL } from "@/lib/site";
 
 /**
  * Sefaria's own `data.sectionNames[0]` would give the precise unit name, but
@@ -28,9 +29,13 @@ export const revalidate = 43200;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
+  // Next.js expects the raw (decoded) segment value here, not a pre-encoded
+  // one — it handles URL-encoding internally when matching requests. Passing
+  // an already-encoded string double-encodes multi-word titles (e.g. "Pirkei
+  // Avot" -> "Pirkei%2520Avot"), which then fails to resolve against Sefaria.
   return POPULAR_BOOKS.flatMap(([title, chapterCount]) =>
     Array.from({ length: chapterCount }, (_, i) => ({
-      book: encodeURIComponent(title),
+      book: title,
       chapter: String(i + 1),
     })),
   );
@@ -133,11 +138,31 @@ export default async function ReaderPage({ params }: Props) {
     text: enLines.slice(0, 4).join(" "),
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang chủ", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "Thư viện", item: `${SITE_URL}/thu-vien` },
+      { "@type": "ListItem", position: 3, name: label, item: `${SITE_URL}/sach/${encodeURIComponent(title)}` },
+      {
+        "@type": "ListItem",
+        position: 4,
+        name: `${unitLabel} ${chapter}`,
+        item: `${SITE_URL}/doc/${encodeURIComponent(title)}/${encodeURIComponent(chapter)}`,
+      },
+    ],
+  };
+
   return (
     <div className="mx-auto max-w-5xl px-3 pb-24 pt-8 sm:px-6 lg:px-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <nav className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-[0.28em] text-parchment/50">

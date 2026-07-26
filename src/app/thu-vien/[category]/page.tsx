@@ -29,8 +29,9 @@ async function loadCategory(slug: string) {
   return { category, list: category ? grouped.get(category) ?? [] : [] };
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { category: slug } = await params;
+  const { q, sort, page } = await searchParams;
   let category: string | undefined;
   try {
     ({ category } = await loadCategory(slug));
@@ -39,10 +40,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   if (!category) return { title: "Bộ sưu tập" };
   const meta = viCategory(category);
+  // A filtered/sorted/paginated view is a duplicate of the canonical category
+  // page for search engines — index only the plain, first-page view.
+  const isFiltered = Boolean(q?.trim()) || sort === "az" || (page && page !== "1");
   return {
     title: `${meta.name} · Toàn bộ tác phẩm`,
     description: `${meta.desc} Duyệt toàn bộ tác phẩm trong bộ “${meta.name}”, tìm nhanh theo tên sách.`,
     alternates: { canonical: `/thu-vien/${categorySlug(category)}` },
+    robots: isFiltered ? { index: false, follow: true } : { index: true, follow: true },
   };
 }
 

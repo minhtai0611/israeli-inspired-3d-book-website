@@ -51,10 +51,30 @@ export class SefariaNotFoundError extends Error {}
  * whenever the upstream API has a bad moment). */
 export class SefariaUpstreamError extends Error {}
 
+/**
+ * Retries only network/timeout failures (not HTTP error statuses — those are
+ * informative, not transient). Needed because building the site's popular
+ * chapters/books (generateStaticParams) fires hundreds of concurrent
+ * requests at Sefaria; without this, a single slow response under that load
+ * fails the entire production build, even though a plain retry succeeds.
+ */
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fetch(url, init);
+    } catch (e) {
+      lastError = e;
+      if (i < attempts - 1) await new Promise((r) => setTimeout(r, 300 * 2 ** i));
+    }
+  }
+  throw lastError;
+}
+
 async function sefariaFetch<T>(path: string, revalidate = 60 * 60 * 6): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${SEFARIA_BASE}${path}`, {
+    res = await fetchWithRetry(`${SEFARIA_BASE}${path}`, {
       next: { revalidate },
       headers: { Accept: "application/json" },
       signal: AbortSignal.timeout(8000),

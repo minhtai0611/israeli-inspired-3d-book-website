@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { getBookIndex, getText } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
 import { resolveStructure, buildIntegerItems, findFirstReadableRef } from "@/lib/schema-resolver";
+import { categorySlug } from "@/lib/library";
 import { POPULAR_BOOKS } from "@/lib/popular-books";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 43200;
 // Everything outside POPULAR_BOOKS still renders on-demand and is cached
@@ -13,7 +15,11 @@ export const revalidate = 43200;
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  return POPULAR_BOOKS.map(([title]) => ({ book: encodeURIComponent(title) }));
+  // Next.js expects the raw (decoded) segment value here, not a pre-encoded
+  // one — it handles URL-encoding internally when matching requests. Passing
+  // an already-encoded string double-encodes multi-word titles (e.g. "Pirkei
+  // Avot" -> "Pirkei%2520Avot"), which then fails to resolve against Sefaria.
+  return POPULAR_BOOKS.map(([title]) => ({ book: title }));
 }
 
 type Props = { params: Promise<{ book: string }> };
@@ -89,11 +95,38 @@ export default async function BookPage({ params }: Props) {
     author: index.authors?.map((a) => ({ "@type": "Person", name: a.en })),
   };
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang chủ", item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: "Thư viện", item: `${SITE_URL}/thu-vien` },
+      ...(topCat
+        ? [{
+            "@type": "ListItem",
+            position: 3,
+            name: catMeta?.name ?? topCat,
+            item: `${SITE_URL}/thu-vien/${categorySlug(topCat)}`,
+          }]
+        : []),
+      {
+        "@type": "ListItem",
+        position: topCat ? 4 : 3,
+        name: label,
+        item: `${SITE_URL}/sach/${encodeURIComponent(title)}`,
+      },
+    ],
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-12 sm:px-6 lg:px-10">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <nav className="mb-6 text-xs uppercase tracking-[0.28em] text-parchment/50">
