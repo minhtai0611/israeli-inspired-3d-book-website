@@ -117,6 +117,18 @@ export type SchemaNode = {
   /** Rarely present; kept only as a defensive fallback. */
   title?: string;
   titles?: { lang: string; text: string; primary?: boolean }[];
+  /**
+   * Some nodes (e.g. Ramban on Exodus's main commentary body) have no
+   * `titles` at all, just this single display string instead — verified
+   * live 2026-07-27.
+   */
+  sharedTitle?: string;
+  /**
+   * Marks a Sefaria "default child" — not independently addressable; a bare
+   * ref to its PARENT auto-resolves into it. Its own `key` (typically the
+   * literal string "default") is an internal identifier, not a ref segment.
+   */
+  default?: boolean;
   nodes?: SchemaNode[];
 };
 

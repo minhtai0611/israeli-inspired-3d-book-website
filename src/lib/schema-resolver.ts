@@ -81,11 +81,35 @@ function classifyAddressKind(index: BookIndex): AddressKind {
 function nodeTitle(node: SchemaNode, lang: "en" | "he"): string | undefined {
   if (lang === "en" && node.title) return node.title;
   const match = node.titles?.find((t) => t.lang === lang && t.primary) ?? node.titles?.find((t) => t.lang === lang);
-  return match?.text ?? (lang === "en" ? node.key : undefined);
+  if (match) return match.text;
+  if (lang === "en") return node.sharedTitle ?? node.key;
+  return undefined;
 }
 
+/**
+ * A Sefaria "default child" (`default: true`) has no name of its own — its
+ * content is what a bare ref to its PARENT auto-resolves into (the same
+ * mechanism ADR 0001 already relies on for named complex nodes, e.g. "Zohar,
+ * Introduction"). Using its internal `key` (typically the literal string
+ * "default") as if it were a real section name produces a ref Sefaria
+ * doesn't recognize — this was a real, reproducible 404 hit across 50+ books
+ * in a 400-book sample (Sha'arei Kedusha, Marpeh la'Nefesh, Abarbanel on
+ * Torah, etc.), found via scripts/audit-complex-nav.ts.
+ */
 function collectLeaves(nodes: SchemaNode[], pathSegments: string[], out: { segment: string; label: string; heLabel?: string }[]): void {
   for (const n of nodes) {
+    if (n.default) {
+      // Reuse the parent's own path as the leaf: Sefaria auto-resolves it
+      // into this node's first section. If the parent path is empty (this
+      // default child sits directly at the book's own root, e.g. Ramban on
+      // Exodus's main commentary body), there's no bare-title auto-resolve
+      // entry point we can link to without guessing an unverified chapter
+      // number — skip it rather than emit a link that will 404.
+      if (pathSegments.length > 0) {
+        out.push({ segment: pathSegments.join(", "), label: pathSegments[pathSegments.length - 1] });
+      }
+      continue;
+    }
     const label = nodeTitle(n, "en") ?? "";
     const heLabel = nodeTitle(n, "he");
     const path = label ? [...pathSegments, label] : pathSegments;

@@ -95,6 +95,40 @@ const ZOHAR: BookIndex = {
   },
 } as unknown as BookIndex;
 
+// Real Sha'arei Kedusha: each named "Part N" has a single unnamed
+// `default: true` child (no titles/key beyond the literal "default").
+const SHAAREI_KEDUSHA: BookIndex = {
+  title: "Sha'arei Kedusha",
+  heTitle: "שערי קדושה",
+  categories: ["Musar"],
+  sectionNames: [],
+  schema: {
+    nodes: [
+      {
+        key: "Part 1",
+        titles: [{ lang: "en", text: "Part 1", primary: true }],
+        nodes: [{ key: "default", default: true }],
+      },
+    ],
+  },
+} as unknown as BookIndex;
+
+// Real Ramban on Exodus: an "intro" node with no `titles`, only `sharedTitle`,
+// plus a `default: true` node sitting directly at the book's own root (no
+// named parent at all).
+const RAMBAN_ON_EXODUS: BookIndex = {
+  title: "Ramban on Exodus",
+  heTitle: "רמב״ן על שמות",
+  categories: ["Rishonim"],
+  sectionNames: [],
+  schema: {
+    nodes: [
+      { key: "intro", sharedTitle: "Introduction" },
+      { key: "default", default: true },
+    ],
+  },
+} as unknown as BookIndex;
+
 describe("resolveStructure", () => {
   it("Genesis -> integer, 50 chapters, first ref = 'Genesis 1'", () => {
     const s = resolveStructure(GENESIS, "Genesis");
@@ -128,6 +162,30 @@ describe("resolveStructure", () => {
         expect(() => encodeURIComponent(item.segment)).not.toThrow();
       }
     }
+  });
+
+  it("a 'default: true' child under a named parent reuses the parent's own path, not '<parent>, default'", () => {
+    // Regression: this was a real, reproducible 404 across 50+ books in a
+    // 400-book sample (found via scripts/audit-complex-nav.ts) — the
+    // internal `key` "default" got treated as if it were a real section
+    // name and appended to the ref, which Sefaria doesn't recognize.
+    const s = resolveStructure(SHAAREI_KEDUSHA, "Sha'arei Kedusha");
+    expect(s.items.map((i) => i.segment)).toEqual(["Part 1"]);
+    expect(s.items.map((i) => i.ref)).toEqual(["Sha'arei Kedusha, Part 1"]);
+    expect(s.items.some((i) => i.segment.includes("default"))).toBe(false);
+  });
+
+  it("a root-level 'default: true' node (no named parent) is skipped, not linked as a guess", () => {
+    const s = resolveStructure(RAMBAN_ON_EXODUS, "Ramban on Exodus");
+    expect(s.items.some((i) => i.segment.includes("default"))).toBe(false);
+    expect(s.items).toHaveLength(1);
+  });
+
+  it("a node with only `sharedTitle` (no titles/title) uses it, not the raw internal key", () => {
+    const s = resolveStructure(RAMBAN_ON_EXODUS, "Ramban on Exodus");
+    expect(s.items.map((i) => i.segment)).toContain("Introduction");
+    expect(s.items.map((i) => i.segment)).not.toContain("intro");
+    expect(s.items.map((i) => i.ref)).toContain("Ramban on Exodus, Introduction");
   });
 });
 
