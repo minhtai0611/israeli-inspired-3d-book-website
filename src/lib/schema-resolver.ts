@@ -199,7 +199,16 @@ function hasContent(data: Pick<TextLookupResult, "text" | "he">): boolean {
   return nonEmpty(data.text) || nonEmpty(data.he);
 }
 
-function segmentFromRef(ref: string, indexTitle: string): string {
+/**
+ * Strips a book's index title off the front of one of its refs, leaving just
+ * the chapter/section segment — e.g. ("Genesis 5", "Genesis") -> "5",
+ * ("Guide for the Perplexed, Introduction of Ibn Tibon", "Guide for the
+ * Perplexed") -> "Introduction of Ibn Tibon". Falls back to returning `ref`
+ * unchanged if it doesn't actually start with `indexTitle` (unexpected
+ * shape) — callers should treat that as "couldn't parse" rather than trust
+ * the result as a segment.
+ */
+export function segmentFromRef(ref: string, indexTitle: string): string {
   const commaPrefix = `${indexTitle}, `;
   const spacePrefix = `${indexTitle} `;
   if (ref.startsWith(commaPrefix)) return ref.slice(commaPrefix.length);

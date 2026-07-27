@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { cleanText, flatten, getText, SefariaNotFoundError } from "@/lib/sefaria";
 import { viBook } from "@/lib/vi";
 import { ReaderView } from "@/components/reader/ReaderView";
-import { buildRef, isRefRefinement } from "@/lib/schema-resolver";
+import { buildRef, isRefRefinement, segmentFromRef } from "@/lib/schema-resolver";
 import { POPULAR_BOOKS } from "@/lib/popular-books";
 import { SITE_URL } from "@/lib/site";
 
@@ -113,12 +113,17 @@ export default async function ReaderPage({ params }: Props) {
 
   const linkFromRef = (r: string | null) => {
     if (!r) return null;
-    // Sefaria refs look like "Genesis 2" or "Berakhot 2a"
-    const idx = r.lastIndexOf(" ");
-    if (idx === -1) return null;
-    const b = r.slice(0, idx);
-    const c = r.slice(idx + 1);
-    return `/doc/${encodeURIComponent(b)}/${encodeURIComponent(c)}`;
+    // Sefaria refs look like "Genesis 2", "Berakhot 2a", or — for
+    // complex-schema books — a bare multi-word node title with no trailing
+    // number at all, e.g. "Guide for the Perplexed, Introduction of Ibn
+    // Tibon". Splitting on the last space (the previous approach) chopped
+    // that last word off as a fake "chapter", producing a ref that doesn't
+    // exist and 500ing the reader page. Stripping the known index title
+    // instead works for every address kind, since it doesn't guess where the
+    // book name ends.
+    const segment = segmentFromRef(r, data.indexTitle);
+    if (segment === r) return null; // couldn't find the index title prefix — don't link somewhere broken
+    return `/doc/${encodeURIComponent(data.indexTitle)}/${encodeURIComponent(segment)}`;
   };
 
   const prevHref = linkFromRef(prevRef);

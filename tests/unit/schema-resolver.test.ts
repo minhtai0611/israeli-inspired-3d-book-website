@@ -8,6 +8,7 @@ import {
   isValidSegment,
   isRefRefinement,
   findFirstReadableRef,
+  segmentFromRef,
   type TextLookupResult,
 } from "@/lib/schema-resolver";
 import type { BookIndex } from "@/lib/sefaria";
@@ -185,6 +186,42 @@ describe("findFirstReadableRef — skips empty leading sections", () => {
       return { ref, indexTitle: "Berakhot", text: "some verse text", he: "", next: null };
     };
     expect(await findFirstReadableRef(structure, fetchText)).toEqual({ ref: "Berakhot 1:2", segment: "1:2" });
+  });
+});
+
+describe("segmentFromRef", () => {
+  it("strips a space-joined numeric/daf prefix", () => {
+    expect(segmentFromRef("Genesis 5", "Genesis")).toBe("5");
+    expect(segmentFromRef("Berakhot 2a", "Berakhot")).toBe("2a");
+  });
+
+  it("strips a comma-joined complex-node prefix, even with no trailing number", () => {
+    // Regression: this is the exact ref shape ReaderPage's prev/next nav
+    // links receive for complex-schema books when the adjacent section is a
+    // bare node with no per-node length data (see ADR 0001). The previous
+    // implementation split on the LAST space in the whole ref, which chopped
+    // the final word off as a fake "chapter" instead of using the known
+    // index title to find the real boundary — producing a ref that doesn't
+    // exist and 500ing /doc/[book]/[chapter].
+    expect(
+      segmentFromRef(
+        "Guide for the Perplexed, Introduction of Ibn Tibon",
+        "Guide for the Perplexed",
+      ),
+    ).toBe("Introduction of Ibn Tibon");
+    expect(
+      segmentFromRef("Guide for the Perplexed, Prefatory Remarks", "Guide for the Perplexed"),
+    ).toBe("Prefatory Remarks");
+  });
+
+  it("strips a deeply-nested comma-joined prefix down to the full remaining path", () => {
+    expect(
+      segmentFromRef("Zohar, Addenda, Volume I", "Zohar"),
+    ).toBe("Addenda, Volume I");
+  });
+
+  it("falls back to returning the ref unchanged when it doesn't start with the index title", () => {
+    expect(segmentFromRef("Exodus 1", "Genesis")).toBe("Exodus 1");
   });
 });
 
