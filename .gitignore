@@ -52,5 +52,8 @@ Thumbs.db
 # Lighthouse CI
 /.lighthouseci/
 
+# Vitest coverage output
+/coverage/
+
 # Local-only Claude Code config/skills
 /.claude/
