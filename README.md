@@ -72,7 +72,7 @@ above only does the fast metadata-only refresh, since Vercel Functions can't run
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 22+ (matches CI — see `.github/workflows/ci.yml`)
 - A PostgreSQL database (required to boot at all — see `src/db/index.ts`; browsing/search read
   from it with a live-Sefaria fallback, see `docs/db-sync.md`)
 
