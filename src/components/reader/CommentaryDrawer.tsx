@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { VerseLink } from "@/lib/sefaria";
 
 /** Fetches/renders links for one verseRef — mounted fresh (via key) per verse so switching verses resets to "loading" without a manual setState reset in an effect. */
@@ -58,6 +59,15 @@ export function CommentaryDrawer({
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const open = verseRef !== null;
+  // Portal to document.body: RootLayout's <main className="relative z-10"> creates a
+  // stacking context that a plain z-index bump can't escape (a fixed-position descendant's
+  // z-index is only compared against siblings WITHIN that ancestor's stacking context, not
+  // against <SiteHeader>'s z-50 sibling) — verified live 2026-07-31, the drawer's own header/
+  // close button rendered visually and hit-test BEHIND SiteHeader despite z-[60] > z-50.
+  // document.body isn't available during SSR (Next.js pre-renders "use client" components
+  // too) — unlike waiting a tick for an effect, document is synchronously available on the
+  // very first client render, so a plain typeof check needs no state/effect at all.
+  const canUseDom = typeof document !== "undefined";
 
   useEffect(() => {
     if (!open) return;
@@ -69,12 +79,14 @@ export function CommentaryDrawer({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  return (
+  if (!canUseDom) return null;
+
+  return createPortal(
     <>
       <div
         aria-hidden={!open}
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/50 transition-opacity motion-reduce:transition-none ${
+        className={`fixed inset-0 z-[55] bg-black/50 transition-opacity motion-reduce:transition-none ${
           open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
@@ -83,7 +95,7 @@ export function CommentaryDrawer({
         aria-modal="true"
         aria-hidden={!open}
         aria-label={verseRef ? `Chú giải cho ${verseRef}` : "Chú giải"}
-        className={`fixed right-0 top-0 z-50 h-full w-full max-w-96 transform overflow-y-auto bg-[#0b1220] p-5 shadow-2xl transition-transform duration-300 motion-reduce:transition-none ${
+        className={`fixed right-0 top-0 z-[60] h-full w-full max-w-96 transform overflow-y-auto bg-[#0b1220] p-5 shadow-2xl transition-transform duration-300 motion-reduce:transition-none ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -102,6 +114,7 @@ export function CommentaryDrawer({
 
         {verseRef && <CommentaryLinks key={verseRef} verseRef={verseRef} />}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
