@@ -8,6 +8,20 @@
       "when": 1784778200954,
       "tag": "0000_damp_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785456998383,
+      "tag": "0001_phase1_reader_retention_fixes",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785457779327,
+      "tag": "0002_phase2_chapter_text_cache",
+      "breakpoints": true
     }
   ]
 }

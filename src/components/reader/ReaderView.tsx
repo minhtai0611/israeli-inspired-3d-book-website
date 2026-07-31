@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { getClientId } from "@/lib/client-id";
 import {
   getReaderPrefsServerSnapshot,
   getReaderPrefsSnapshot,
@@ -9,6 +10,8 @@ import {
   subscribeReaderPrefs,
   type ReaderPrefs,
 } from "@/lib/reader-storage";
+import { buildRef } from "@/lib/schema-resolver";
+import { CommentaryDrawer } from "./CommentaryDrawer";
 
 type Verse = { n: number; he: string; en: string };
 
@@ -50,10 +53,21 @@ export function ReaderView({
   );
   const [copiedVerse, setCopiedVerse] = useState<number | null>(null);
   const [copyMessage, setCopyMessage] = useState("");
+  const [drawerVerse, setDrawerVerse] = useState<number | null>(null);
   const copyTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     recordVisit({ book, chapter, label, heTitle });
+
+    const clientId = getClientId();
+    if (!clientId) return; // localStorage unavailable — DB sync is best-effort only
+    fetch("/api/progress/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId, bookTitle: book, chapterRef: chapter }),
+    }).catch(() => {
+      // Best-effort — the reader already works fully from localStorage.
+    });
   }, [book, chapter, label, heTitle]);
 
   useEffect(() => {
@@ -64,6 +78,14 @@ export function ReaderView({
 
   function update(partial: Partial<ReaderPrefs>) {
     setReaderPrefs({ ...prefs, ...partial });
+  }
+
+  // Only integer/Talmud chapter segments have a well-defined ":verse" suffix (see
+  // buildRef's own regex) — for named complex-schema sections, fall back to the whole
+  // section's ref rather than guessing an address format Sefaria won't recognize.
+  function verseRefFor(n: number): string {
+    const segment = /^\d+[ab]?$/i.test(chapter) ? `${chapter}:${n}` : chapter;
+    return buildRef(book, segment);
   }
 
   function markCopied(n: number) {
@@ -172,7 +194,16 @@ export function ReaderView({
             {verses.map((v) => (
               <li key={v.n} className="verse group" id={`v${v.n}`}>
                 <span className="verse-num flex flex-col items-center gap-1">
-                  <span className="font-hebrew" dir="rtl">{v.n}.</span>
+                  <button
+                    type="button"
+                    onClick={() => setDrawerVerse(v.n)}
+                    className="font-hebrew min-h-[24px] min-w-[24px] hover:text-[#d4af37] focus-visible:text-[#d4af37]"
+                    dir="rtl"
+                    aria-label={`Xem chú giải câu ${v.n}`}
+                    title="Xem chú giải"
+                  >
+                    {v.n}.
+                  </button>
                   <button
                     type="button"
                     onClick={() => copyVerseLink(v.n)}
@@ -202,6 +233,11 @@ export function ReaderView({
       <p role="status" aria-live="polite" className="sr-only">
         {copyMessage}
       </p>
+
+      <CommentaryDrawer
+        verseRef={drawerVerse !== null ? verseRefFor(drawerVerse) : null}
+        onClose={() => setDrawerVerse(null)}
+      />
     </div>
   );
 }

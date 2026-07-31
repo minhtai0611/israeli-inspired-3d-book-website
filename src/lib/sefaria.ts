@@ -1,7 +1,9 @@
 // Real open-source book source: Sefaria API (https://developers.sefaria.org)
 // All book text (Hebrew + English) comes from this API — nothing fabricated.
+import { eq } from "drizzle-orm";
 
 const SEFARIA_BASE = "https://www.sefaria.org/api";
+const CHAPTER_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 export type SefariaText = {
   ref: string;
@@ -104,10 +106,44 @@ export async function getIndex(): Promise<IndexNode[]> {
   return sefariaFetch<IndexNode[]>("/index", 60 * 60 * 24);
 }
 
-/** Text with chapter content in both Hebrew (`he`) and English (`text`). */
+/**
+ * Text with chapter content in both Hebrew (`he`) and English (`text`).
+ * Stale-while-revalidate: serves chapter_text_cache when fresher than
+ * CHAPTER_CACHE_TTL_MS, otherwise fetches live and mirrors the result back.
+ * Cache reads/writes are best-effort — a DB hiccup falls through to (or past)
+ * the live Sefaria fetch rather than failing the request.
+ */
 export async function getText(ref: string): Promise<SefariaText> {
+  try {
+    const { db } = await import("@/db");
+    const { chapterTextCache } = await import("@/db/schema");
+    const [cached] = await db
+      .select({ content: chapterTextCache.content, fetchedAt: chapterTextCache.fetchedAt })
+      .from(chapterTextCache)
+      .where(eq(chapterTextCache.ref, ref))
+      .limit(1);
+    if (cached && Date.now() - cached.fetchedAt.getTime() < CHAPTER_CACHE_TTL_MS) {
+      return cached.content as SefariaText;
+    }
+  } catch {
+    // Cache unreachable (DB down, or no DATABASE_URL in this environment) — fall through.
+  }
+
   const encoded = encodeURIComponent(ref).replace(/%20/g, "_");
-  return sefariaFetch<SefariaText>(`/texts/${encoded}?context=0&commentary=0`, 60 * 60 * 12);
+  const data = await sefariaFetch<SefariaText>(`/texts/${encoded}?context=0&commentary=0`, 60 * 60 * 12);
+
+  try {
+    const { db } = await import("@/db");
+    const { chapterTextCache } = await import("@/db/schema");
+    await db
+      .insert(chapterTextCache)
+      .values({ ref, content: data })
+      .onConflictDoUpdate({ target: chapterTextCache.ref, set: { content: data, fetchedAt: new Date() } });
+  } catch {
+    // Best-effort mirror — the live Sefaria response above is already correct either way.
+  }
+
+  return data;
 }
 
 /** A node in a "complex" work's schema tree (e.g. Zohar, Guide for the Perplexed). */
@@ -160,6 +196,142 @@ export type BookIndex = {
 export async function getBookIndex(title: string): Promise<BookIndex> {
   const encoded = encodeURIComponent(title).replace(/%20/g, "_");
   return sefariaFetch<BookIndex>(`/v2/raw/index/${encoded}`, 60 * 60 * 24);
+}
+
+export type VerseSearchHit = {
+  ref: string;
+  heRef: string;
+  /** Language of the specific indexed version this hit matched in — a verse can match once per translation. */
+  lang: string;
+  /** Sefaria's own <b>-highlighted snippet — not rendered raw; callers re-highlight against safely-escaped text. */
+  snippet: string;
+  categories: string[];
+};
+
+export type VerseSearchResult = {
+  total: number;
+  hits: VerseSearchHit[];
+};
+
+const VERSE_SEARCH_PAGE_SIZE = 10;
+
+/**
+ * Full-text search over Sefaria's text corpus via its ElasticSearch proxy
+ * (POST /api/search-wrapper — request/response shape verified live against
+ * the real API 2026-07-31, not from docs alone). Distinct from getIndex()'s
+ * title/metadata search in src/lib/library.ts.
+ */
+export async function searchVerses(query: string, page = 1): Promise<VerseSearchResult> {
+  let res: Response;
+  try {
+    res = await fetchWithRetry(`${SEFARIA_BASE}/search-wrapper`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        query,
+        type: "text",
+        field: "naive_lemmatizer",
+        size: VERSE_SEARCH_PAGE_SIZE,
+        from: (page - 1) * VERSE_SEARCH_PAGE_SIZE,
+        slop: 10,
+        sort_method: "score",
+        sort_fields: ["pagesheetrank"],
+        filter_fields: [],
+        filters: [],
+        aggs: ["path"],
+        source_proj: true,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch (e) {
+    throw new SefariaUpstreamError(`Network error calling Sefaria search-wrapper: ${String(e)}`);
+  }
+  if (!res.ok) {
+    throw new SefariaUpstreamError(`Sefaria search-wrapper → ${res.status}`);
+  }
+  const data = await res.json();
+  type RawHit = {
+    _source: { ref: string; heRef: string; lang: string; exact?: string; categories?: string[] };
+    highlight?: { naive_lemmatizer?: string[] };
+  };
+  const rawHits: RawHit[] = data?.hits?.hits ?? [];
+  return {
+    total: data?.hits?.total ?? 0,
+    hits: rawHits.map((h) => ({
+      ref: h._source.ref,
+      heRef: h._source.heRef,
+      lang: h._source.lang,
+      snippet: h.highlight?.naive_lemmatizer?.[0] ?? h._source.exact ?? "",
+      categories: h._source.categories ?? [],
+    })),
+  };
+}
+
+export type VerseLink = {
+  category: string;
+  ref: string;
+  collectiveTitle: { en: string; he?: string };
+  /** English text of the linked commentary/Targum — absent when sourceHasEn is false. */
+  text?: string;
+  /** Hebrew text of the linked commentary/Targum. */
+  he?: string;
+};
+
+type VerseLinkMeta = {
+  category: string;
+  ref: string;
+  collectiveTitle?: { en: string; he?: string };
+  /** Sefaria's own canonical ordering for a verse's commentaries (e.g. Rashi before later commentators). */
+  commentaryNum?: number;
+};
+
+/**
+ * Caps how many commentary/Targum links get their full text resolved per verse.
+ * `with_text=1` on a heavily-annotated verse (e.g. Genesis 1:1 has 529 Commentary
+ * links alone) returns a multi-MB payload and can take 10s+ — verified live
+ * 2026-07-31. Fetching metadata only (with_text=0, ~2s even for Genesis 1:1) and
+ * resolving just the top N via getText() (already SWR-cached) keeps this bounded.
+ */
+const MAX_VERSE_LINKS = 20;
+
+/**
+ * Commentary/Targum links for a ref. Shape verified live against the real API
+ * 2026-07-31: GET /api/links/{ref}?with_text=0&category=Commentary&category=Targum
+ * returns link metadata (category distinguishes "Commentary"/"Targum" from the
+ * ~15 other link categories Sefaria returns) without the large embedded text
+ * blobs that with_text=1 carries.
+ */
+export async function getVerseLinks(ref: string): Promise<VerseLink[]> {
+  const encoded = encodeURIComponent(ref).replace(/%20/g, "_");
+  const meta = await sefariaFetch<VerseLinkMeta[]>(
+    `/links/${encoded}?with_text=0&category=Commentary&category=Targum`,
+    60 * 60 * 12,
+  );
+  const top = meta
+    .filter((l) => l.category === "Commentary" || l.category === "Targum")
+    .sort((a, b) => (a.commentaryNum ?? 0) - (b.commentaryNum ?? 0))
+    .slice(0, MAX_VERSE_LINKS);
+
+  const asPlainText = (v: string | string[] | string[][]): string =>
+    typeof v === "string" ? v : Array.isArray(v) ? v.flat(2).join(" ") : "";
+
+  const settled = await Promise.all(
+    top.map(async (l): Promise<VerseLink | null> => {
+      try {
+        const data = await getText(l.ref);
+        return {
+          category: l.category,
+          ref: l.ref,
+          collectiveTitle: l.collectiveTitle ?? { en: l.ref },
+          text: cleanText(asPlainText(data.text)) || undefined,
+          he: cleanText(asPlainText(data.he)) || undefined,
+        };
+      } catch {
+        return null; // A single bad/missing commentary ref shouldn't drop the whole drawer.
+      }
+    }),
+  );
+  return settled.filter((l): l is VerseLink => l !== null);
 }
 
 /** Strip HTML tags & footnote markers from Sefaria text. */

@@ -2,20 +2,25 @@
 // anonymous (no-login) reader retention tables. /thu-vien, /thu-vien/[category],
 // and /tim-kiem read from `books`/`categories` here (src/lib/library-db.ts),
 // falling back to the live Sefaria index if the DB is unreachable or hasn't
-// been synced yet. /sach and /doc still read Sefaria directly per-request —
-// individual chapter/book-index content isn't mirrored, only the catalog
-// metadata used for browsing/search. See docs/db-sync.md and
+// been synced yet. /doc's chapter text is mirrored on read into
+// chapter_text_cache (7-day staleness window) by getText() in
+// src/lib/sefaria.ts; /sach's book-index (table of contents) still isn't
+// mirrored. See docs/db-sync.md and
 // scripts/sync-sefaria-index.ts / src/lib/sync-catalog.ts for how `books` gets
-// populated and verified. reading_history/reading_progress/bookmarks remain
-// unused placeholders — the shipped reader still uses localStorage directly.
+// populated and verified. reading_history/reading_progress mirror the
+// localStorage-based reader state (src/lib/reader-storage.ts) via
+// src/app/api/progress/sync/route.ts; bookmarks has no writer yet — no
+// bookmarking UI exists in the reader.
 import {
   boolean,
   integer,
+  jsonb,
   pgTable,
   serial,
   text,
   timestamp,
   unique,
+  uuid,
 } from "drizzle-orm/pg-core";
 
 export const categories = pgTable("categories", {
@@ -75,12 +80,15 @@ export const syncRuns = pgTable("sync_runs", {
 });
 
 // Anonymous (no auth) reader retention — keyed by a client-generated id stored in
-// a cookie/localStorage, not a user account.
+// localStorage (src/lib/client-id.ts), not a user account. `chapter` is the same
+// URL segment ReaderView/reader-storage.ts already use — text, not integer,
+// since it's not always numeric (Talmud daf like "2a", complex-schema sections
+// like "Introduction"; see src/lib/schema-resolver.ts).
 export const readingHistory = pgTable("reading_history", {
   id: serial("id").primaryKey(),
-  clientId: text("client_id").notNull(),
+  clientId: uuid("client_id").notNull(),
   book: text("book").notNull(),
-  chapter: integer("chapter").notNull(),
+  chapter: text("chapter").notNull(),
   readAt: timestamp("read_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -88,9 +96,9 @@ export const readingProgress = pgTable(
   "reading_progress",
   {
     id: serial("id").primaryKey(),
-    clientId: text("client_id").notNull(),
+    clientId: uuid("client_id").notNull(),
     book: text("book").notNull(),
-    chapter: integer("chapter").notNull(),
+    chapter: text("chapter").notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique("reading_progress_client_book_unique").on(t.clientId, t.book)],
@@ -98,10 +106,20 @@ export const readingProgress = pgTable(
 
 export const bookmarks = pgTable("bookmarks", {
   id: serial("id").primaryKey(),
-  clientId: text("client_id").notNull(),
+  clientId: uuid("client_id").notNull(),
   book: text("book").notNull(),
-  chapter: integer("chapter").notNull(),
+  chapter: text("chapter").notNull(),
   verse: integer("verse"),
   note: text("note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Stale-while-revalidate mirror of getText() (src/lib/sefaria.ts) responses,
+// keyed by the same ref string passed to getText. Only ever holds real
+// content — sefariaFetch already throws before a 200-with-`{error}` payload
+// reaches a caller, so nothing here is a cached error page.
+export const chapterTextCache = pgTable("chapter_text_cache", {
+  ref: text("ref").primaryKey(),
+  content: jsonb("content").notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
 });

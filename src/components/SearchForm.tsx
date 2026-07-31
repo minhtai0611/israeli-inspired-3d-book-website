@@ -2,9 +2,11 @@
 export function SearchForm({
   defaultValue = "",
   compact = false,
+  defaultMode = "title",
 }: {
   defaultValue?: string;
   compact?: boolean;
+  defaultMode?: "title" | "verse";
 }) {
   return (
     <form
@@ -27,6 +29,20 @@ export function SearchForm({
           }
         />
       </label>
+      {compact ? (
+        <input type="hidden" name="mode" value={defaultMode} />
+      ) : (
+        <div role="radiogroup" aria-label="Kiểu tìm kiếm" className="flex items-center gap-1 text-xs">
+          <label className="flex items-center gap-1.5 rounded-full border border-[#d4af37]/30 px-3 py-1.5 text-parchment/80">
+            <input type="radio" name="mode" value="title" defaultChecked={defaultMode !== "verse"} />
+            Tên sách
+          </label>
+          <label className="flex items-center gap-1.5 rounded-full border border-[#d4af37]/30 px-3 py-1.5 text-parchment/80">
+            <input type="radio" name="mode" value="verse" defaultChecked={defaultMode === "verse"} />
+            Trong câu Kinh văn
+          </label>
+        </div>
+      )}
       <button type="submit" className={compact ? "btn-outline !py-1.5 text-xs" : "btn-gold"}>
         <span aria-hidden>🔍</span> Tìm
       </button>

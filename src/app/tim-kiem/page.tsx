@@ -1,14 +1,15 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { getIndex } from "@/lib/sefaria";
+import { getIndex, getText, searchVerses, cleanText, type VerseSearchHit } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
 import { flattenBooks, searchBooks } from "@/lib/library";
 import { getReadableBooksFromDb } from "@/lib/library-db";
 import { SearchForm } from "@/components/SearchForm";
+import { segmentFromRef } from "@/lib/schema-resolver";
 
 export const revalidate = 86400;
 
-type Props = { searchParams: Promise<{ q?: string }> };
+type Props = { searchParams: Promise<{ q?: string; mode?: string; page?: string }> };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q } = await searchParams;
@@ -20,13 +21,80 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   };
 }
 
+/** Verse-search result card content: canonical bilingual text for one search hit's ref. */
+type VerseResultCard = {
+  ref: string;
+  heRef: string;
+  book: string;
+  chapterHref: string | null;
+  he: string;
+  en: string;
+};
+
+function highlightMatches(text: string, query: string) {
+  if (!text || !query.trim()) return text;
+  const idx = text.toLowerCase().indexOf(query.trim().toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded bg-[#d4af37]/30 px-0.5 text-parchment">{text.slice(idx, idx + query.trim().length)}</mark>
+      {text.slice(idx + query.trim().length)}
+    </>
+  );
+}
+
+/** Dedupes hits by ref (a verse can match once per translation/version) and resolves each to canonical bilingual text. */
+async function resolveVerseCards(hits: VerseSearchHit[]): Promise<VerseResultCard[]> {
+  const uniqueRefs = [...new Set(hits.map((h) => h.ref))];
+  const settled = await Promise.all(
+    uniqueRefs.map(async (ref) => {
+      try {
+        const data = await getText(ref);
+        const asText = (v: string | string[] | string[][]): string => (typeof v === "string" ? v : "");
+        const segment = segmentFromRef(data.ref, data.indexTitle);
+        // segmentFromRef falls back to returning the ref unchanged when it doesn't start with
+        // indexTitle (unexpected shape) — treat that as "couldn't build a link" like ReaderPage does.
+        const chapterHref =
+          segment !== data.ref
+            ? `/doc/${encodeURIComponent(data.indexTitle)}/${encodeURIComponent(segment)}`
+            : null;
+        return {
+          ref,
+          heRef: data.heRef,
+          book: data.indexTitle,
+          chapterHref,
+          he: cleanText(asText(data.he)),
+          en: cleanText(asText(data.text)),
+        } satisfies VerseResultCard;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return settled.filter((c): c is VerseResultCard => c !== null);
+}
+
 export default async function SearchPage({ searchParams }: Props) {
-  const { q = "" } = await searchParams;
+  const { q = "", mode: rawMode, page: rawPage } = await searchParams;
   const trimmed = q.trim();
+  const mode = rawMode === "verse" ? "verse" : "title";
+  const page = Math.max(1, Number(rawPage) || 1);
 
   let results: ReturnType<typeof searchBooks> = [];
+  let verseCards: VerseResultCard[] = [];
+  let verseTotal = 0;
   let error = false;
-  if (trimmed) {
+
+  if (trimmed && mode === "verse") {
+    try {
+      const { total, hits } = await searchVerses(trimmed, page);
+      verseTotal = total;
+      verseCards = await resolveVerseCards(hits);
+    } catch {
+      error = true;
+    }
+  } else if (trimmed) {
     let books;
     try {
       books = await getReadableBooksFromDb();
@@ -46,30 +114,89 @@ export default async function SearchPage({ searchParams }: Props) {
       <div className="mb-10 rise">
         <p className="text-xs uppercase tracking-[0.3em] text-[#d4af37]">Sifria · Tìm kiếm</p>
         <h1 className="mt-2 font-display text-4xl sm:text-5xl">
-          Tìm <span className="text-gradient-gold">tên sách</span>
+          {mode === "verse" ? (
+            <>Tìm <span className="text-gradient-gold">trong câu Kinh văn</span></>
+          ) : (
+            <>Tìm <span className="text-gradient-gold">tên sách</span></>
+          )}
         </h1>
         <p className="mt-3 max-w-2xl font-serif text-lg text-parchment/70">
-          Gõ tên sách bằng tiếng Anh, tiếng Hebrew, hoặc tên tiếng Việt — ví dụ “Genesis”,
-          “Psalms”, hoặc “Thi Thiên”.
+          {mode === "verse"
+            ? "Tìm một từ hoặc cụm từ xuất hiện trong chính văn bản Kinh thánh, song ngữ Hebrew – Anh."
+            : "Gõ tên sách bằng tiếng Anh, tiếng Hebrew, hoặc tên tiếng Việt — ví dụ “Genesis”, “Psalms”, hoặc “Thi Thiên”."}
         </p>
       </div>
 
-      <SearchForm defaultValue={trimmed} />
+      <SearchForm defaultValue={trimmed} defaultMode={mode} />
 
       <div className="mt-10">
         {!trimmed && (
           <p className="glass rounded-2xl p-6 text-center text-parchment/70">
-            Nhập tên sách phía trên để bắt đầu tìm kiếm.
+            Nhập từ khóa phía trên để bắt đầu tìm kiếm.
           </p>
         )}
 
         {trimmed && error && (
           <div className="glass rounded-2xl p-6 text-center text-parchment/80">
-            Không thể tải chỉ mục từ Sefaria lúc này. Xin thử lại sau vài phút.
+            Không thể tải kết quả từ Sefaria lúc này. Xin thử lại sau vài phút.
           </div>
         )}
 
-        {trimmed && !error && results.length === 0 && (
+        {trimmed && mode === "verse" && !error && verseCards.length === 0 && (
+          <p className="glass rounded-2xl p-6 text-center text-parchment/70">
+            Không tìm thấy câu nào khớp với “{trimmed}”.
+          </p>
+        )}
+
+        {trimmed && mode === "verse" && verseCards.length > 0 && (
+          <>
+            <p className="mb-6 text-sm text-parchment/60">
+              Khoảng {verseTotal.toLocaleString("vi-VN")} kết quả cho “{trimmed}” — trang {page}
+            </p>
+            <div className="space-y-4">
+              {verseCards.map((c) => (
+                <div key={c.ref} className="glass rounded-2xl p-5">
+                  <p className="text-[10px] uppercase tracking-[0.28em] text-[#d4af37]/70">
+                    {viBook(c.book)?.name ?? c.book} · {c.ref}
+                  </p>
+                  <p className="font-hebrew mt-2 text-lg text-[#d4af37]" dir="rtl" lang="he">
+                    {highlightMatches(c.he, trimmed)}
+                  </p>
+                  <p className="mt-1 text-parchment/85" lang="en">
+                    {highlightMatches(c.en, trimmed)}
+                  </p>
+                  {c.chapterHref && (
+                    <Link href={c.chapterHref} className="mt-3 inline-block text-xs text-[#d4af37] underline">
+                      Đọc toàn chương →
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+            <nav className="mt-8 flex justify-between text-sm">
+              {page > 1 ? (
+                <Link
+                  href={`/tim-kiem?q=${encodeURIComponent(trimmed)}&mode=verse&page=${page - 1}`}
+                  className="btn-outline"
+                >
+                  ← Trang trước
+                </Link>
+              ) : (
+                <span />
+              )}
+              {page * 10 < verseTotal && (
+                <Link
+                  href={`/tim-kiem?q=${encodeURIComponent(trimmed)}&mode=verse&page=${page + 1}`}
+                  className="btn-outline"
+                >
+                  Trang tiếp →
+                </Link>
+              )}
+            </nav>
+          </>
+        )}
+
+        {trimmed && mode === "title" && !error && results.length === 0 && (
           <p className="glass rounded-2xl p-6 text-center text-parchment/70">
             Không tìm thấy sách nào khớp với “{trimmed}”.{" "}
             <Link href="/thu-vien" className="text-[#d4af37] underline">
@@ -79,7 +206,7 @@ export default async function SearchPage({ searchParams }: Props) {
           </p>
         )}
 
-        {trimmed && results.length > 0 && (
+        {trimmed && mode === "title" && results.length > 0 && (
           <>
             <p className="mb-6 text-sm text-parchment/60">
               {results.length} kết quả cho “{trimmed}”

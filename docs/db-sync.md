@@ -5,9 +5,11 @@
 `/thu-vien`, `/thu-vien/[category]`, and `/tim-kiem` read the catalog (title, Hebrew title,
 category, Vietnamese name, and verified readability) from Postgres via `src/lib/library-db.ts`,
 falling back to a live Sefaria `/index` fetch if the DB is unreachable or returns no readable
-books (e.g. before the first sync has run). `/sach/[book]` and `/doc/[book]/[chapter]` still read
-Sefaria directly per request — individual book tables-of-contents and chapter text are not
-mirrored, only the catalog metadata used for browsing/search.
+books (e.g. before the first sync has run). `/doc/[book]/[chapter]` reads chapter text through
+`getText()` in `src/lib/sefaria.ts`, which mirrors each ref into `chapter_text_cache`
+(stale-while-revalidate, 7-day window) — a repeat read of the same chapter within that window
+skips the Sefaria round-trip entirely. `/sach/[book]`'s book table-of-contents is still not
+mirrored.
 
 The `/index` payload is ~5.3MB, over Next's 2MB data-cache limit, so a live-fetch cold request
 never gets cached — this is the actual problem the DB read path solves for the browsing/search
@@ -24,9 +26,14 @@ pages.
   `is_readable`, `section_count`, `verified_at`
 - `book_aliases` — alternate search terms per book (currently just the Vietnamese display name)
 - `sync_runs` — audit log of each sync attempt (status, book count, error message)
-- `reading_history` / `reading_progress` / `bookmarks` — anonymous (no login), keyed by a
-  client-generated id — foundation for possible future reader-retention features; the shipped
-  reader controls currently use `localStorage` directly and do not write to these tables.
+- `reading_history` / `reading_progress` — anonymous (no login), keyed by a client-generated UUID
+  (`src/lib/client-id.ts`); `ReaderView` mirrors localStorage reader state into these via
+  `POST /api/progress/sync` on every chapter view (non-blocking, best-effort). `bookmarks` has no
+  writer yet — no bookmarking UI exists in the reader.
+- `chapter_text_cache` — SWR mirror of `getText()` responses (`src/lib/sefaria.ts`), keyed by ref,
+  7-day staleness window. `npm run sync:sefaria`'s readability verification (`verifyReadability` in
+  `src/lib/sync-catalog.ts`) also calls `getText()`, so a full catalog sync incidentally pre-warms
+  this cache for every book's opening section — a side benefit, not something it was built for.
 
 ## Two sync modes — and why there are two
 
@@ -76,5 +83,5 @@ over `books`.
 - Only 18 of 6,598 books have a `book_aliases` row today, because only that many have a
   Vietnamese label in `src/lib/vi.ts` — expanding `BOOK_VI` and re-running the full sync would
   grow that coverage.
-- `/sach` and `/doc` are not DB-backed — they still read Sefaria live per request (already cached
-  via `generateStaticParams` for the popular-books set; see the caching phase).
+- `/sach`'s book table-of-contents is not DB-backed — it still reads Sefaria live per request
+  (already cached via `generateStaticParams` for the popular-books set).
