@@ -278,20 +278,18 @@ body::after {
   font-family: var(--font-frank), serif;
   color: var(--gold-deep);
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.85em;
   padding-top: .2rem;
 }
 .verse-he {
   direction: rtl;
   font-family: var(--font-frank), "Frank Ruhl Libre", serif;
-  font-size: 1.35rem;
-  line-height: 2;
+  font-size: 1.35em;
   color: #2b2210;
 }
 .verse-en {
   font-family: var(--font-cormorant), serif;
-  font-size: 1.1rem;
-  line-height: 1.75;
+  font-size: 1.1em;
   color: #4a3d1c;
   font-style: italic;
 }
