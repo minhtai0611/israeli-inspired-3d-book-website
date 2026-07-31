@@ -315,23 +315,34 @@ export async function getVerseLinks(ref: string): Promise<VerseLink[]> {
   const asPlainText = (v: string | string[] | string[][]): string =>
     typeof v === "string" ? v : Array.isArray(v) ? v.flat(2).join(" ") : "";
 
-  const settled = await Promise.all(
-    top.map(async (l): Promise<VerseLink | null> => {
-      try {
-        const data = await getText(l.ref);
-        return {
-          category: l.category,
-          ref: l.ref,
-          collectiveTitle: l.collectiveTitle ?? { en: l.ref },
-          text: cleanText(asPlainText(data.text)) || undefined,
-          he: cleanText(asPlainText(data.he)) || undefined,
-        };
-      } catch {
-        return null; // A single bad/missing commentary ref shouldn't drop the whole drawer.
-      }
-    }),
-  );
-  return settled.filter((l): l is VerseLink => l !== null);
+  async function resolveOne(l: VerseLinkMeta): Promise<VerseLink | null> {
+    try {
+      const data = await getText(l.ref);
+      return {
+        category: l.category,
+        ref: l.ref,
+        collectiveTitle: l.collectiveTitle ?? { en: l.ref },
+        text: cleanText(asPlainText(data.text)) || undefined,
+        he: cleanText(asPlainText(data.he)) || undefined,
+      };
+    } catch {
+      return null; // A single bad/missing commentary ref shouldn't drop the whole drawer.
+    }
+  }
+
+  // Resolving all MAX_VERSE_LINKS refs in one Promise.all fan-out timed out in
+  // production (~9.3s, verified against the live deployment 2026-07-31) even for
+  // lightly-annotated verses where a single getText() call is fast — some
+  // concurrency limit (Sefaria per-IP throttling, Neon's pooled-connection cap, or
+  // Vercel's outbound limits) that didn't reproduce locally. Batching mirrors the
+  // same CONCURRENCY=5 pattern sync-catalog.ts already uses for bulk Sefaria fetches.
+  const RESOLVE_CONCURRENCY = 5;
+  const resolved: (VerseLink | null)[] = [];
+  for (let i = 0; i < top.length; i += RESOLVE_CONCURRENCY) {
+    const chunk = top.slice(i, i + RESOLVE_CONCURRENCY);
+    resolved.push(...(await Promise.all(chunk.map(resolveOne))));
+  }
+  return resolved.filter((l): l is VerseLink => l !== null);
 }
 
 /** Strip HTML tags & footnote markers from Sefaria text. */
