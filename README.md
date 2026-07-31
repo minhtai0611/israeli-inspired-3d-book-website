@@ -22,6 +22,15 @@ itself is Hebrew/English, sourced from Sefaria as-is.
 - Correctly handles Sefaria's three chapter-addressing schemes (plain integer, Talmud daf, and
   named complex sections like Zohar) — see `docs/adr/0001-schema-resolver.md`
 - "Continue reading" on the home page, from the same per-browser history
+- Anonymous reading progress/history synced to Postgres (`POST /api/progress/sync`, keyed by a
+  client-generated UUID in `src/lib/client-id.ts`) alongside the existing localStorage state —
+  non-blocking, best-effort
+- Chapter text is mirrored into a Postgres cache on read (stale-while-revalidate, 7-day window —
+  see `getText()` in `src/lib/sefaria.ts`) so a repeat chapter view skips the Sefaria round-trip
+- Bilingual full-text verse search at `/tim-kiem` (mode toggle next to the existing book-title
+  search) — searches Sefaria's text corpus directly, not just titles/metadata
+- Click a verse number to open a drawer of classical commentary/Targum for that verse
+  (`CommentaryDrawer.tsx`), capped and metadata-first to stay fast even on heavily-annotated verses
 - Dynamic OG images, sitemap, BreadcrumbList JSON-LD for social sharing/SEO
 - `lang="he"`/`lang="en"` on all bilingual text, WCAG AA contrast, reduced-motion and
   high-contrast media query support, skip-to-content link, visible focus outlines — see
@@ -34,7 +43,9 @@ itself is Hebrew/English, sourced from Sefaria as-is.
 - [Tailwind CSS v4](https://tailwindcss.com)
 - [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL — `/thu-vien`, `/thu-vien/[category]`, and
   `/tim-kiem` read the catalog from here (falling back to a live Sefaria fetch if the DB is
-  unreachable); see `docs/db-sync.md`. `/sach` and `/doc` still read Sefaria directly per request.
+  unreachable); `/doc`'s chapter text is mirrored into a cache on read; reading progress/history
+  sync here anonymously. See `docs/db-sync.md`. `/sach`'s book table-of-contents still reads
+  Sefaria directly per request.
 - Content: [Sefaria](https://www.sefaria.org) Open API
 
 ## Architecture
@@ -47,18 +58,28 @@ flowchart LR
     subgraph Vercel["Vercel (Next.js 16 App Router)"]
         Browse["/thu-vien, /thu-vien/[category], /tim-kiem"]
         Read["/sach/[book], /doc/[book]/[chapter]"]
+        ProgressAPI["/api/progress/sync"]
+        LinksAPI["/api/verse-links"]
         Cron["/api/cron/sync (weekly, CRON_SECRET)"]
         Health["/api/health"]
     end
     subgraph Neon["Neon Postgres"]
         DB[(categories / books / book_aliases)]
+        Cache[(chapter_text_cache)]
+        Reader[(reading_history / reading_progress)]
     end
     Sefaria["Sefaria Open API"]
 
     U --> Browse
     U --> Read
     Browse -- "catalog read (fallback: live fetch)" --> DB
-    Read -- "book TOC + chapter text, always live" --> Sefaria
+    Read -- "book TOC, always live" --> Sefaria
+    Read -- "chapter text: cache-first, SWR 7d" --> Cache
+    Read -. "cache miss/expired" .-> Sefaria
+    Read -- "commentary/Targum links" --> LinksAPI
+    LinksAPI -- "metadata + per-link text (cached)" --> Sefaria
+    Read -- "non-blocking, on chapter view" --> ProgressAPI
+    ProgressAPI -- "upsert/insert" --> Reader
     Cron -- "fast metadata-only refresh" --> Sefaria
     Cron -- "upsert" --> DB
     Health -- "lastSync, readableCount" --> DB
@@ -138,17 +159,25 @@ src/
     sach/[book]/                Book table of contents (+ generateStaticParams for popular books)
     doc/[book]/[chapter]/       Reader (+ generateStaticParams for popular chapters, opengraph-image.tsx)
     api/health/, api/cron/sync/ DB health check; weekly catalog metadata refresh
+    api/progress/sync/          Upserts reading_progress + inserts reading_history (client-id keyed)
+    api/verse-links/            Server proxy for getVerseLinks() — CommentaryDrawer fetches through this
     robots.ts, sitemap.ts, opengraph-image.tsx, manifest.ts, layout.tsx
                                  All derive their URL from lib/site.ts
   components/
-    reader/                     ReaderView (controls, verse copy-link), ContinueReading
+    reader/                     ReaderView (controls, verse copy-link, commentary trigger),
+                                 CommentaryDrawer (per-verse commentary/Targum, portalled to
+                                 document.body), ContinueReading
     SearchForm.tsx, SiteHeader.tsx, SiteFooter.tsx, HeroOrbit.tsx, HebrewMarquee.tsx
   lib/
-    sefaria.ts                  Sefaria API client (index/book/text fetching, HTML cleanup)
+    sefaria.ts                  Sefaria API client: index/book/text fetching (with a Postgres SWR
+                                 cache), searchVerses (full-text), getVerseLinks (commentary/Targum),
+                                 HTML cleanup
     schema-resolver.ts          Resolves Sefaria's 3 address schemes (integer/Talmud daf/complex)
     library.ts                  Shared index-flattening/grouping/search helpers (live-fetch source)
     library-db.ts               Same FlatBook[] shape, sourced from Postgres (browsing/search)
     sync-catalog.ts             Shared sync logic: fast metadata-only vs. slow full-verification
+    client-id.ts                Anonymous per-browser client UUID (localStorage) for reading_history/
+                                 reading_progress
     hebrew-numeral.ts           Hebrew numeral formatting (chapter/daf labels)
     popular-books.ts            Torah + Psalms + 5 Megillot + Pirkei Avot — the prerendered set
     reader-storage.ts           localStorage-backed reader prefs + history (useSyncExternalStore)
@@ -156,7 +185,8 @@ src/
                                  sitemap/JSON-LD URL
     vi.ts                       Vietnamese display names/descriptions for categories & books
   db/
-    schema.ts                   categories/books/book_aliases/sync_runs/reading_*/bookmarks
+    schema.ts                   categories/books/book_aliases/sync_runs/reading_history/
+                                 reading_progress/bookmarks/chapter_text_cache
 scripts/
   audit-coverage.ts             Samples the catalog and measures real book readability
   sync-sefaria-index.ts         CLI wrapper around sync-catalog.ts's full verification sync
