@@ -444,3 +444,43 @@ export function flatten(text: string[] | string[][]): string[] {
   }
   return out.filter(Boolean);
 }
+
+/** One entry in Sefaria's daily/weekly reading calendar (Daf Yomi, Parashat HaShavua,
+ * Haftarah, 929, Daily Mishnah, Daily Rambam, …). Shape verified live 2026-08-02 against
+ * `GET /api/calendars/` — unlike ADV-2's assumed "audio API", this endpoint genuinely
+ * exists as documented. `ref` can be a verse range (e.g. "Deuteronomy 7:12-11:25" for a
+ * parashah spanning several chapters) — see calendarLinkTarget() for turning it into a
+ * single book+chapter this site's /doc/[book]/[chapter] route can open. */
+export type CalendarItem = {
+  title: { en: string; he: string };
+  displayValue: { en: string; he: string };
+  url: string;
+  ref: string;
+  heRef?: string;
+  category: string;
+};
+
+export type GlobalCalendars = {
+  date: string;
+  timezone: string;
+  calendar_items: CalendarItem[];
+};
+
+export async function getGlobalCalendars(): Promise<GlobalCalendars> {
+  return sefariaFetch<GlobalCalendars>("/calendars/", 60 * 60 * 24);
+}
+
+/**
+ * Reduces a calendar item's `ref` to the single {book, chapter} this site's
+ * /doc/[book]/[chapter] route understands — the first chapter for a multi-chapter
+ * parashah range, and daf "a" side for Daf Yomi (Sefaria's calendar names a whole daf,
+ * e.g. "Chullin 93", but the reader addresses one side at a time; "a" is the natural
+ * starting point — the reader's own prev/next nav reaches "93b" from there).
+ */
+export function calendarLinkTarget(item: CalendarItem): { book: string; chapter: string } | null {
+  const m = item.ref.match(/^(.+?)\s+(\d+[ab]?)(?:[:\-]|$)/i);
+  if (!m) return null;
+  let chapter = m[2];
+  if (item.category === "Talmud" && !/[ab]$/i.test(chapter)) chapter += "a";
+  return { book: m[1], chapter };
+}

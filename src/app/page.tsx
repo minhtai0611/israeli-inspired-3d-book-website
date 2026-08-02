@@ -6,6 +6,7 @@ import { ContinueReading } from "@/components/reader/ContinueReading";
 import { getIndex } from "@/lib/sefaria";
 import { HERO_QUOTES, viBook, viCategory } from "@/lib/vi";
 import { GlossaryText } from "@/components/GlossaryText";
+import { GlobalReadingCalendar } from "@/components/home/GlobalReadingCalendar";
 
 export const revalidate = 21600; // 6h
 
@@ -117,6 +118,8 @@ export default async function HomePage() {
       </section>
 
       <ContinueReading />
+
+      <GlobalReadingCalendar />
 
       {/* ============ QUOTE STRIP ============ */}
       <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-10">
