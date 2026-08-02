@@ -294,6 +294,13 @@ body::after {
   font-style: italic;
 }
 
+/* Soft gold highlight for the verse the cantillation audio is currently reading. */
+.verse-audio-active {
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.55), 0 0 18px rgba(212, 175, 55, 0.35);
+  transition: box-shadow .25s ease-out;
+}
+
 /* --- Perspective hero orb --- */
 .orb {
   position: absolute;

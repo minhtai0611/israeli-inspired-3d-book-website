@@ -358,6 +358,83 @@ export function cleanText(html: string): string {
     .trim();
 }
 
+/**
+ * One recorded audio segment anchored to a single verse, as returned by Sefaria's
+ * `related_api`. Several clips for the same chapter typically share one `media_url`
+ * (a whole aliyah/portion recording) and are distinguished only by their
+ * `start_time`/`end_time` offsets (seconds, as strings) into that one file — there is
+ * no per-verse audio file. Verified live 2026-08-02 against `GET /api/related/Genesis.1`
+ * (31 clips, all `media_url` pointing at the same "Bereshit-1.mp3") — the plan's assumed
+ * "Sefaria Audio Registry API" endpoint does not exist; this `related_api` "media" field,
+ * sourced from the community PocketTorah project (Ashkenazi trope, Avery-Binder style),
+ * is the real mechanism. Coverage is Torah-only and incomplete outside weekly-read
+ * portions — non-Torah refs (Talmud, Mishnah, Kabbalah, …) return an empty array.
+ */
+export type AudioCantillationClip = {
+  media_url: string;
+  /** Seconds into `media_url`, as a decimal string — parse with `Number()` before use. */
+  start_time: string;
+  end_time: string;
+  /** Verse this clip covers, e.g. "Genesis 1:1". */
+  anchorRef: string;
+  source: string;
+  source_he?: string;
+  source_site: string;
+  license: string;
+  description: string;
+  description_he?: string;
+};
+
+const AUDIO_CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Recorded Torah-cantillation clips for a ref (chapter or verse), via Sefaria's
+ * `related_api`. Returns `[]` for refs with no recording (most non-Torah texts, and
+ * Torah refs PocketTorah simply never covered) rather than throwing — this is normal,
+ * expected data absence, not an error condition callers need to handle specially.
+ *
+ * Stale-while-revalidate against audioCantillationCache (mirrors getText()'s pattern):
+ * `related_api`'s full response bundles links/sheets/topics/manuscripts too and can run to
+ * 10+ MB, so it is only ever fetched live on a genuine cache miss, then only the small
+ * `media` slice is persisted.
+ */
+export async function getAudioCantillation(ref: string): Promise<AudioCantillationClip[]> {
+  try {
+    const { db } = await import("@/db");
+    const { audioCantillationCache } = await import("@/db/schema");
+    const [cached] = await db
+      .select({ clips: audioCantillationCache.clips, fetchedAt: audioCantillationCache.fetchedAt })
+      .from(audioCantillationCache)
+      .where(eq(audioCantillationCache.ref, ref))
+      .limit(1);
+    if (cached && Date.now() - cached.fetchedAt.getTime() < AUDIO_CACHE_TTL_MS) {
+      return cached.clips as AudioCantillationClip[];
+    }
+  } catch {
+    // Cache unreachable (DB down, or no DATABASE_URL) — fall through to the live fetch.
+  }
+
+  const encoded = encodeURIComponent(ref).replace(/%20/g, "_");
+  // revalidate=0 (no-store): Next's fetch data cache refuses items over 2MB anyway (same
+  // "Failed to set Next.js data cache" limitation already hit by getIndex()'s /index call)
+  // and audioCantillationCache above is the real cache for this endpoint.
+  const data = await sefariaFetch<{ media?: AudioCantillationClip[] }>(`/related/${encoded}`, 0);
+  const clips = data.media ?? [];
+
+  try {
+    const { db } = await import("@/db");
+    const { audioCantillationCache } = await import("@/db/schema");
+    await db
+      .insert(audioCantillationCache)
+      .values({ ref, clips })
+      .onConflictDoUpdate({ target: audioCantillationCache.ref, set: { clips, fetchedAt: new Date() } });
+  } catch {
+    // Best-effort mirror — the live Sefaria response above is already correct either way.
+  }
+
+  return clips;
+}
+
 /** Flatten a text response to a single-dimension array of verses/lines. */
 export function flatten(text: string[] | string[][]): string[] {
   const out: string[] = [];

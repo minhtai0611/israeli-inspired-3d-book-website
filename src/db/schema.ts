@@ -123,3 +123,15 @@ export const chapterTextCache = pgTable("chapter_text_cache", {
   content: jsonb("content").notNull(),
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Stale-while-revalidate mirror of getAudioCantillation()'s (src/lib/sefaria.ts) trimmed
+// `media` array — NOT a mirror of the raw Sefaria `related_api` response, which bundles
+// multi-MB of links/sheets/topics/manuscripts alongside the media we actually want (16MB
+// for "Genesis 1" alone, verified live 2026-08-02) and is too large/slow to fetch live on
+// every page view. PocketTorah's recordings are effectively static, hence the much longer
+// TTL than chapterTextCache.
+export const audioCantillationCache = pgTable("audio_cantillation_cache", {
+  ref: text("ref").primaryKey(),
+  clips: jsonb("clips").notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+});

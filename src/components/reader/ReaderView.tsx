@@ -11,6 +11,7 @@ import {
   type ReaderPrefs,
 } from "@/lib/reader-storage";
 import { buildRef } from "@/lib/schema-resolver";
+import { AudioCantillationBar } from "./AudioCantillationBar";
 import { CommentaryDrawer } from "./CommentaryDrawer";
 
 type Verse = { n: number; he: string; en: string };
@@ -175,6 +176,11 @@ export function ReaderView({
           ))}
         </div>
       </div>
+
+      {/* Keyed so navigating to a new chapter remounts fresh (fresh loading state, no
+          stale trackIndex/playing) instead of a manual setState-on-prop-change effect —
+          same pattern CommentaryLinks uses per verseRef. */}
+      <AudioCantillationBar key={`${book}-${chapter}`} book={book} chapter={chapter} />
 
       {/* PARCHMENT SCROLL */}
       <article className="parchment relative rounded-[28px] p-6 sm:p-10 lg:p-14">
