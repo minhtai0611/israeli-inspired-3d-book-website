@@ -1,7 +1,44 @@
 // Pure-CSS 3D orbital scene with rotating Star-of-David hexagram and orbiting
 // glyphs — evokes ancient Jerusalem architecture meeting a synth-future.
 
+"use client";
+
+import dynamic from "next/dynamic";
+import { useState } from "react";
+
+// Desktop-only, opt-in interactive 3D Torah scroll. next/dynamic + ssr:false
+// requires a Client Component (Next.js app-router rule) and is only pulled
+// into the client bundle once a user toggles it — the default orbit above
+// stays 0 added bytes for the 95% of visitors who never click the button.
+const TorahScroll3D = dynamic(() => import("./ba-d/torah-scroll-3d"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex aspect-square w-full max-w-[520px] items-center justify-center text-sm text-parchment/60">
+      Đang tải mô hình 3D…
+    </div>
+  ),
+});
+
 export function HeroOrbit() {
+  const [show3d, setShow3d] = useState(false);
+
+  return (
+    <div className="relative mx-auto w-full max-w-[520px]">
+      <button
+        type="button"
+        onClick={() => setShow3d((v) => !v)}
+        className="motion-reduce:hidden hidden md:mb-4 md:inline-flex md:items-center md:gap-2 md:rounded-full md:border md:border-[#d4af37]/40 md:bg-[#d4af37]/5 md:px-4 md:py-1.5 md:text-xs md:uppercase md:tracking-[0.2em] md:text-[#d4af37] md:transition md:hover:bg-[#d4af37]/10"
+        aria-pressed={show3d}
+      >
+        {show3d ? "Tắt chế độ 3D Cuộn sách Torah" : "Bật chế độ 3D Cuộn sách Torah (Desktop)"}
+      </button>
+
+      {show3d ? <TorahScroll3D /> : <HeroOrbitCss />}
+    </div>
+  );
+}
+
+function HeroOrbitCss() {
   return (
     <div aria-hidden="true" className="relative mx-auto aspect-square w-full max-w-[520px]">
       {/* glow */}
