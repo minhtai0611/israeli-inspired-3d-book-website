@@ -36,6 +36,19 @@ itself is Hebrew/English, sourced from Sefaria as-is.
   high-contrast media query support, skip-to-content link, visible focus outlines — see
   `docs/a11y.md`
 - Security headers (CSP, HSTS, X-Frame-Options, etc.) — see `next.config.ts`
+- Opt-in interactive 3D Torah scroll on the home hero (`torah-scroll-3d.tsx`, desktop only,
+  lazy-loaded via `next/dynamic({ ssr: false })`) — the default pure-CSS orbit stays 0 added
+  bytes until a user explicitly toggles it on; hidden under `prefers-reduced-motion`
+- Torah cantillation audio player in the reader (`AudioCantillationBar.tsx`) — recorded
+  PocketTorah trope recordings (via Sefaria's `related_api`, Torah-only), with a 30-day Postgres
+  cache (`audio_cantillation_cache`) so the multi-MB upstream payload is only fetched once per
+  ref, plus verse-by-verse highlight synced to playback position
+- ~100-term Hebrew/Jewish glossary (`glossary.ts`) auto-detected and wrapped with a
+  `GlossaryTooltip` wherever it appears in category/book descriptions — hover/focus/click to
+  open, zero layout shift
+- "Ánh Sáng Hôm Nay" home page widget: today's Daf Yomi and this week's Parashat HaShavua,
+  each linking straight into `/doc/[book]/[chapter]`, from Sefaria's calendars API
+  (`getGlobalCalendars()`, 24h cache)
 
 ## Tech stack
 
@@ -56,28 +69,38 @@ flowchart LR
         U[User]
     end
     subgraph Vercel["Vercel (Next.js 16 App Router)"]
+        Home["/ (GlobalReadingCalendar widget)"]
         Browse["/thu-vien, /thu-vien/[category], /tim-kiem"]
-        Read["/sach/[book], /doc/[book]/[chapter]"]
+        Read["/sach/[book], /doc/[book]/[chapter] (+ AudioCantillationBar)"]
         ProgressAPI["/api/progress/sync"]
         LinksAPI["/api/verse-links"]
+        AudioAPI["/api/audio-cantillation"]
         Cron["/api/cron/sync (weekly, CRON_SECRET)"]
         Health["/api/health"]
     end
     subgraph Neon["Neon Postgres"]
         DB[(categories / books / book_aliases)]
         Cache[(chapter_text_cache)]
+        AudioCache[(audio_cantillation_cache, 30d)]
         Reader[(reading_history / reading_progress)]
     end
     Sefaria["Sefaria Open API"]
+    PocketTorah["raw.githubusercontent.com (PocketTorah mp3s)"]
 
+    U --> Home
     U --> Browse
     U --> Read
+    Home -- "today's calendar, 24h cache" --> Sefaria
     Browse -- "catalog read (fallback: live fetch)" --> DB
     Read -- "book TOC, always live" --> Sefaria
     Read -- "chapter text: cache-first, SWR 7d" --> Cache
     Read -. "cache miss/expired" .-> Sefaria
     Read -- "commentary/Targum links" --> LinksAPI
     LinksAPI -- "metadata + per-link text (cached)" --> Sefaria
+    Read -- "cantillation clips" --> AudioAPI
+    AudioAPI -- "cache-first, SWR 30d" --> AudioCache
+    AudioAPI -. "cache miss (related_api, trimmed to media[])" .-> Sefaria
+    Read -. "browser plays the mp3 directly" .-> PocketTorah
     Read -- "non-blocking, on chapter view" --> ProgressAPI
     ProgressAPI -- "upsert/insert" --> Reader
     Cron -- "fast metadata-only refresh" --> Sefaria
@@ -161,17 +184,29 @@ src/
     api/health/, api/cron/sync/ DB health check; weekly catalog metadata refresh
     api/progress/sync/          Upserts reading_progress + inserts reading_history (client-id keyed)
     api/verse-links/            Server proxy for getVerseLinks() — CommentaryDrawer fetches through this
+    api/audio-cantillation/     Server proxy for getAudioCantillation() — AudioCantillationBar fetches through this
     robots.ts, sitemap.ts, opengraph-image.tsx, manifest.ts, layout.tsx
                                  All derive their URL from lib/site.ts
   components/
     reader/                     ReaderView (controls, verse copy-link, commentary trigger),
                                  CommentaryDrawer (per-verse commentary/Targum, portalled to
-                                 document.body), ContinueReading
+                                 document.body), ContinueReading, AudioCantillationBar
+                                 (cantillation playback + verse highlight)
+    home/                       GlobalReadingCalendar (Daf Yomi / Parashat HaShavua widget)
+    ba-d/                       torah-scroll-3d.tsx — opt-in interactive 3D scroll, lazy-loaded
+                                 from HeroOrbit.tsx via next/dynamic({ ssr: false })
+    GlossaryTooltip.tsx, GlossaryText.tsx
+                                 Hover/focus/click term tooltip + auto-wrap-matching-terms helper
     SearchForm.tsx, SiteHeader.tsx, SiteFooter.tsx, HeroOrbit.tsx, HebrewMarquee.tsx
   lib/
     sefaria.ts                  Sefaria API client: index/book/text fetching (with a Postgres SWR
                                  cache), searchVerses (full-text), getVerseLinks (commentary/Targum),
+                                 getAudioCantillation (PocketTorah trope clips via related_api, with
+                                 its own Postgres SWR cache), getGlobalCalendars +
+                                 calendarLinkTarget (Daf Yomi / Parashat HaShavua → route target),
                                  HTML cleanup
+    glossary.ts                  ~100-term Hebrew/Jewish glossary + the regex used to auto-match
+                                 terms in free text (see GlossaryText.tsx)
     schema-resolver.ts          Resolves Sefaria's 3 address schemes (integer/Talmud daf/complex)
     library.ts                  Shared index-flattening/grouping/search helpers (live-fetch source)
     library-db.ts               Same FlatBook[] shape, sourced from Postgres (browsing/search)
@@ -186,7 +221,8 @@ src/
     vi.ts                       Vietnamese display names/descriptions for categories & books
   db/
     schema.ts                   categories/books/book_aliases/sync_runs/reading_history/
-                                 reading_progress/bookmarks/chapter_text_cache
+                                 reading_progress/bookmarks/chapter_text_cache/
+                                 audio_cantillation_cache
 scripts/
   audit-coverage.ts             Samples the catalog and measures real book readability
   sync-sefaria-index.ts         CLI wrapper around sync-catalog.ts's full verification sync
@@ -233,6 +269,10 @@ Hebrew text is the Masoretic text (CC-BY-SA); English translations and book meta
 via the [Sefaria](https://www.sefaria.org) Open API under their respective licenses. Sifria does
 not modify or reinterpret the underlying text — see the `/ve-chung-toi` page for more on the
 project's approach.
+
+Torah cantillation audio (played by `AudioCantillationBar`) is served via Sefaria's `related_api`,
+sourced from the [PocketTorah](http://www.pockettorah.com) project (Ashkenazi trope, Avery-Binder
+style) under CC-BY-SA — attribution shown inline in the audio player itself.
 
 ## License
 
