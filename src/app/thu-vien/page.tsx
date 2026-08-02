@@ -4,6 +4,7 @@ import { getIndex } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";
 import { categorySlug, flattenBooks, groupByCategory, sortCategories, type FlatBook } from "@/lib/library";
 import { getReadableBooksFromDb } from "@/lib/library-db";
+import { GlossaryText } from "@/components/GlossaryText";
 
 export const revalidate = 86400;
 
@@ -90,7 +91,7 @@ export default async function LibraryPage() {
                       {meta.name}
                     </h2>
                     <p className="mt-1 max-w-xl text-sm text-parchment/60">
-                      {meta.desc}
+                      <GlossaryText text={meta.desc} />
                     </p>
                   </div>
                 </div>

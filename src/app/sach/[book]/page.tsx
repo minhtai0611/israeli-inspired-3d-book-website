@@ -7,6 +7,7 @@ import { resolveStructure, buildIntegerItems, findFirstReadableRef } from "@/lib
 import { categorySlug } from "@/lib/library";
 import { POPULAR_BOOKS } from "@/lib/popular-books";
 import { SITE_URL } from "@/lib/site";
+import { GlossaryText } from "@/components/GlossaryText";
 
 export const revalidate = 43200;
 // Everything outside POPULAR_BOOKS still renders on-demand and is cached
@@ -151,7 +152,7 @@ export default async function BookPage({ params }: Props) {
           </h1>
           {(vi?.blurb || index.enShortDesc || index.enDesc) && (
             <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-parchment/80">
-              {vi?.blurb ?? index.enShortDesc ?? index.enDesc}
+              <GlossaryText text={vi?.blurb ?? index.enShortDesc ?? index.enDesc ?? ""} />
             </p>
           )}
           {index.authors && index.authors.length > 0 && (

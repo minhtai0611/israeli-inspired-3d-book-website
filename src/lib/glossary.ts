@@ -1,0 +1,143 @@
+// Concise Vietnamese glossary of ~100 core Jewish/Hebrew terms that recur across Sifria's
+// category and book descriptions. Static reference data (unlike scripture text/calendars,
+// this isn't sourced from Sefaria's API — there is no live "glossary" endpoint) — kept
+// deliberately short per entry since these render inside a small tooltip (see
+// GlossaryTooltip.tsx), not a full article.
+export type GlossaryTerm = {
+  term: string;
+  def: string;
+};
+
+export const GLOSSARY: GlossaryTerm[] = [
+  { term: "Torah", def: "Năm cuốn sách đầu của Kinh Thánh Hebrew — Sáng Thế, Xuất Hành, Lê-vi, Dân Số, Đệ Nhị Luật — nền tảng luật pháp và tường thuật của Do Thái giáo." },
+  { term: "Tanakh", def: "Toàn bộ Kinh Thánh Hebrew, gồm ba phần: Torah, Nevi'im (Ngôn Sứ) và Ketuvim (Trước Tác)." },
+  { term: "Nevi'im", def: "Phần \"Ngôn Sứ\" của Tanakh — các sách như Joshua, Isaiah, Jeremiah, Ezekiel." },
+  { term: "Nabiim", def: "Cách viết khác của Nevi'im — phần \"Ngôn Sứ\" trong Tanakh." },
+  { term: "Ketuvim", def: "Phần \"Trước Tác\" của Tanakh — Thi Thiên, Châm Ngôn, Job, Nhã Ca và các sách khác." },
+  { term: "Ketubim", def: "Cách viết khác của Ketuvim — phần \"Trước Tác\" trong Tanakh." },
+  { term: "Mishnah", def: "Bộ sưu tập luật truyền khẩu Do Thái đầu tiên được ghi chép, biên soạn tại Israel khoảng thế kỷ III CN." },
+  { term: "Gemara", def: "Phần bình luận và tranh luận của các Rabbi về Mishnah — cùng với Mishnah tạo thành Talmud." },
+  { term: "Talmud", def: "Bộ đại luận gồm Mishnah và Gemara, ghi lại tranh luận pháp lý và đạo đức của các Rabbi qua nhiều thế kỷ." },
+  { term: "Midrash", def: "Thể loại diễn giải Kinh Thánh bằng truyện kể, ẩn dụ và chú giải sâu xa." },
+  { term: "Aggadah", def: "Phần tường thuật, truyện kể, đạo đức trong văn học Rabbi — đối lập với phần luật (Halakhah)." },
+  { term: "Halakhah", def: "Hệ thống luật pháp và thực hành tôn giáo Do Thái, rút ra từ Torah và truyền thống Rabbi." },
+  { term: "Kabbalah", def: "Truyền thống huyền học Do Thái, tìm hiểu bản chất ẩn giấu của Thiên Chúa và vũ trụ." },
+  { term: "Zohar", def: "Tác phẩm nền tảng của Kabbalah, chú giải huyền bí về Torah, xuất hiện vào thế kỷ XIII." },
+  { term: "Sefer Yetzirah", def: "\"Sách Sáng Tạo\" — một trong những văn bản huyền học Do Thái cổ xưa nhất." },
+  { term: "Sephirot", def: "Mười phẩm tính/kênh phát xuất của thần tính trong Kabbalah, từ Keter đến Malchut." },
+  { term: "Ein Sof", def: "Trong Kabbalah, \"Đấng Vô Hạn\" — bản thể Thiên Chúa vượt trên mọi giới hạn và mô tả." },
+  { term: "Shechinah", def: "Sự hiện diện của Thiên Chúa ngự giữa loài người, theo truyền thống Rabbi và Kabbalah." },
+  { term: "Etz Chaim", def: "\"Cây Sự Sống\" — hình ảnh Torah, và tên gọi hai trục gỗ cuốn Sefer Torah." },
+  { term: "Chumash", def: "Bản in Ngũ Kinh (Torah) dùng để đọc và học, thường kèm bản dịch và chú giải." },
+  { term: "Rashi", def: "Rabbi Shlomo Yitzchaki (thế kỷ XI), nhà chú giải Kinh Thánh và Talmud có ảnh hưởng bậc nhất." },
+  { term: "Ramban", def: "Rabbi Moshe ben Nachman (Nachmanides, thế kỷ XIII), nhà chú giải và triết gia Do Thái." },
+  { term: "Ibn Ezra", def: "Abraham ibn Ezra (thế kỷ XII), nhà chú giải Kinh Thánh, nhà thơ và học giả Tây Ban Nha gốc Do Thái." },
+  { term: "Rambam", def: "Rabbi Moshe ben Maimon (Maimonides, thế kỷ XII), triết gia và nhà luật học, tác giả Mishneh Torah." },
+  { term: "Targum", def: "Bản dịch Kinh Thánh Hebrew sang tiếng Aram, dùng trong phụng vụ và học tập thời cổ." },
+  { term: "Beit Midrash", def: "\"Nhà học\" — không gian truyền thống để nghiên cứu Torah và Talmud." },
+  { term: "Yeshiva", def: "Học viện truyền thống chuyên nghiên cứu Torah, Talmud và luật Do Thái." },
+  { term: "Siddur", def: "Sách cầu nguyện chuẩn của Do Thái giáo, dùng trong phụng vụ hằng ngày và ngày lễ." },
+  { term: "Amidah", def: "Lời cầu nguyện trung tâm, đọc đứng, trong ba buổi cầu nguyện hằng ngày của Do Thái giáo." },
+  { term: "Shema", def: "Lời tuyên xưng đức tin trung tâm của Do Thái giáo, bắt đầu bằng \"Nghe này, Israel...\" (Đệ Nhị Luật 6:4)." },
+  { term: "Kaddish", def: "Lời cầu nguyện thánh hóa danh Thiên Chúa, đọc trong nhiều thời điểm phụng vụ, kể cả khi tưởng niệm người qua đời." },
+  { term: "Brit Milah", def: "Nghi thức cắt bì cho bé trai Do Thái vào ngày thứ tám sau khi sinh." },
+  { term: "Bar Mitzvah", def: "Nghi thức đánh dấu bé trai Do Thái bước vào tuổi trưởng thành tôn giáo (13 tuổi)." },
+  { term: "Bat Mitzvah", def: "Nghi thức đánh dấu bé gái Do Thái bước vào tuổi trưởng thành tôn giáo (12 hoặc 13 tuổi)." },
+  { term: "Kosher", def: "Tính từ chỉ thực phẩm hoặc vật dụng hợp với luật Kashrut của Do Thái giáo." },
+  { term: "Kashrut", def: "Hệ thống luật về thực phẩm được phép và cách chế biến trong Do Thái giáo." },
+  { term: "Challah", def: "Bánh mì bện truyền thống, dùng trong bữa ăn ngày Shabbat và các dịp lễ." },
+  { term: "Kiddush", def: "Lời chúc phúc trên rượu, mở đầu bữa ăn ngày Shabbat và các ngày lễ." },
+  { term: "Havdalah", def: "Nghi thức kết thúc ngày Shabbat, phân định giữa ngày thánh và ngày thường." },
+  { term: "Shabbat", def: "Ngày nghỉ hằng tuần của Do Thái giáo, từ hoàng hôn thứ Sáu đến tối thứ Bảy." },
+  { term: "Sukkot", def: "Lễ Lều Tạm, tưởng niệm 40 năm dân Israel lang thang trong sa mạc." },
+  { term: "Pesach", def: "Lễ Vượt Qua, tưởng niệm cuộc xuất hành khỏi Ai Cập." },
+  { term: "Shavuot", def: "Lễ Ngũ Tuần, tưởng niệm việc Torah được ban tại núi Sinai." },
+  { term: "Rosh Hashanah", def: "Tết Do Thái, ngày đầu năm mới theo lịch Do Thái." },
+  { term: "Yom Kippur", def: "Ngày Xá Tội, ngày thánh nhất trong năm, dành cho ăn chay và sám hối." },
+  { term: "Chanukah", def: "Lễ Hanukkah, tưởng niệm việc tái cung hiến Đền Thờ Jerusalem và phép lạ dầu đèn." },
+  { term: "Purim", def: "Lễ hội tưởng niệm việc dân Do Thái Ba Tư thoát khỏi âm mưu diệt chủng, theo sách Esther." },
+  { term: "Tu BiShvat", def: "\"Tết của cây cối\" — ngày lễ tôn vinh thiên nhiên và cây trồng tại Israel." },
+  { term: "Tisha B'Av", def: "Ngày ăn chay tưởng niệm sự tàn phá của cả hai Đền Thờ Jerusalem." },
+  { term: "Sefer Torah", def: "Cuộn da chép tay chứa trọn vẹn văn bản Torah, dùng để đọc trong phụng vụ." },
+  { term: "Ner Tamid", def: "\"Đèn vĩnh cửu\" — ngọn đèn luôn cháy sáng trước Aron Kodesh trong hội đường." },
+  { term: "Menorah", def: "Chân đèn bảy nhánh, một trong những biểu tượng cổ xưa nhất của Do Thái giáo." },
+  { term: "Mezuzah", def: "Hộp nhỏ chứa đoạn Kinh Thánh, gắn ở khung cửa nhà người Do Thái." },
+  { term: "Tefillin", def: "Hộp da nhỏ chứa đoạn Kinh Thánh, buộc vào tay và trán khi cầu nguyện buổi sáng." },
+  { term: "Tallit", def: "Khăn choàng cầu nguyện có tua (tzitzit) ở bốn góc." },
+  { term: "Kippah", def: "Mũ nhỏ đội trên đỉnh đầu, biểu tượng của lòng kính sợ Thiên Chúa." },
+  { term: "Tzedakah", def: "Việc làm từ thiện, được xem là bổn phận công chính chứ không chỉ là lòng tốt tự nguyện." },
+  { term: "Gemilut Chasadim", def: "\"Việc thi ân\" — hành động tử tế vô vị lợi, một trụ cột đạo đức Do Thái giáo." },
+  { term: "Tikkun Olam", def: "\"Sửa chữa thế giới\" — khái niệm về trách nhiệm hoàn thiện xã hội." },
+  { term: "Teshuvah", def: "Sự ăn năn, quay trở về với Thiên Chúa và con đường công chính." },
+  { term: "Emunah", def: "Đức tin, lòng tin tưởng vào Thiên Chúa trong tư tưởng Do Thái." },
+  { term: "Kavanah", def: "Sự chú tâm, ý hướng nội tâm khi cầu nguyện hoặc thực hành nghi lễ." },
+  { term: "Niggun", def: "Giai điệu tôn giáo không lời, thường dùng trong các cộng đồng Chassidic." },
+  { term: "Cantillation", def: "Nghệ thuật ngâm xướng văn bản Kinh Thánh theo các dấu nhạc truyền thống (trope)." },
+  { term: "Trope", def: "Hệ thống dấu nhạc (ta'amim) hướng dẫn cách ngâm đọc văn bản Kinh Thánh." },
+  { term: "Baal Koreh", def: "Người đọc Torah trước cộng đoàn theo đúng giai điệu cantillation truyền thống." },
+  { term: "Parashat HaShavua", def: "\"Đoạn Torah của tuần\" — phần Torah được đọc theo chu kỳ hằng tuần trong hội đường." },
+  { term: "Daf Yomi", def: "Chương trình đọc một trang Talmud mỗi ngày, hoàn tất toàn bộ Talmud sau khoảng 7,5 năm." },
+  { term: "Daf", def: "Một trang (hai mặt) của Talmud, đơn vị cơ bản trong Daf Yomi." },
+  { term: "Masechet", def: "Một \"khảo luận\" — tiểu mục trong Mishnah hoặc Talmud, tập trung vào một chủ đề luật." },
+  { term: "Amora", def: "Danh xưng các học giả Do Thái đã biên soạn Gemara (khoảng thế kỷ III–VI)." },
+  { term: "Tanna", def: "Danh xưng các học giả Do Thái đã biên soạn Mishnah (khoảng thế kỷ I–II)." },
+  { term: "Gaon", def: "Danh hiệu các lãnh đạo học viện Talmud tại Babylon thời trung cổ." },
+  { term: "Poskim", def: "Các nhà luật học có thẩm quyền đưa ra phán quyết Halakhah." },
+  { term: "Shulchan Aruch", def: "Bộ luật Do Thái chuẩn mực, biên soạn bởi Rabbi Yosef Karo thế kỷ XVI." },
+  { term: "Mishneh Torah", def: "Bộ luật Do Thái toàn diện do Rambam (Maimonides) biên soạn thế kỷ XII." },
+  { term: "Ashkenazi", def: "Cộng đồng Do Thái có gốc tích từ Trung và Đông Âu." },
+  { term: "Sephardi", def: "Cộng đồng Do Thái có gốc tích từ bán đảo Iberia (Tây Ban Nha, Bồ Đào Nha)." },
+  { term: "Mizrahi", def: "Cộng đồng Do Thái có gốc tích từ Trung Đông và Bắc Phi." },
+  { term: "Yiddish", def: "Ngôn ngữ truyền thống của người Do Thái Ashkenazi, pha trộn Đức ngữ và Hebrew." },
+  { term: "Ladino", def: "Ngôn ngữ truyền thống của người Do Thái Sephardi, pha trộn Tây Ban Nha cổ và Hebrew." },
+  { term: "Gematria", def: "Phương pháp diễn giải văn bản Hebrew dựa trên giá trị số của các chữ cái." },
+  { term: "Chazzan", def: "Người dẫn xướng cầu nguyện trong hội đường, còn gọi là cantor." },
+  { term: "Beit Knesset", def: "Hội đường Do Thái — nơi cầu nguyện, học tập và sinh hoạt cộng đồng." },
+  { term: "Aron Kodesh", def: "\"Hòm Thánh\" — nơi lưu giữ các cuộn Sefer Torah trong hội đường." },
+  { term: "Bimah", def: "Bục cao giữa hội đường, nơi đọc Torah." },
+  { term: "Shofar", def: "Tù và làm từ sừng cừu, thổi vào dịp Rosh Hashanah và Yom Kippur." },
+  { term: "Lulav", def: "Bó cành cọ, sim và liễu, cầm cùng Etrog trong lễ Sukkot." },
+  { term: "Etrog", def: "Trái thanh yên (citron) dùng cùng Lulav trong nghi thức lễ Sukkot." },
+  { term: "Sukkah", def: "Lều tạm dựng lên trong dịp lễ Sukkot, tưởng niệm hành trình sa mạc." },
+  { term: "Chesed", def: "\"Lòng nhân từ\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Gevurah", def: "\"Sức mạnh/nghiêm khắc\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Tiferet", def: "\"Vẻ đẹp/hài hòa\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Malchut", def: "\"Vương quyền\" — Sephirah cuối cùng, biểu trưng cho sự hiện diện Thiên Chúa trong thế giới." },
+  { term: "Yesod", def: "\"Nền tảng\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Netzach", def: "\"Vĩnh cửu/chiến thắng\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Hod", def: "\"Uy nghi\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Binah", def: "\"Hiểu biết\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Chochmah", def: "\"Khôn ngoan\" — một trong mười Sephirot trong Kabbalah." },
+  { term: "Keter", def: "\"Vương miện\" — Sephirah cao nhất, gần Ein Sof nhất trong Kabbalah." },
+  { term: "Baal Shem Tov", def: "Rabbi Israel ben Eliezer (thế kỷ XVIII), người sáng lập phong trào Chassidut." },
+  { term: "Chassidut", def: "Phong trào tâm linh Do Thái khởi phát thế kỷ XVIII, nhấn mạnh niềm vui và sự sốt mến." },
+  { term: "Mitnagdim", def: "Nhóm Do Thái truyền thống nhấn mạnh học Talmud, ban đầu đối lập với phong trào Chassidut." },
+  { term: "Golem", def: "Nhân vật huyền thoại Do Thái — một hình người được tạo ra từ đất sét bằng phép huyền bí." },
+  { term: "Dybbuk", def: "Trong dân gian Do Thái, linh hồn lang thang được cho là nhập vào người sống." },
+  { term: "Neshamah", def: "Linh hồn con người, theo quan niệm Do Thái giáo — tầng cao nhất trong các tầng linh hồn." },
+  { term: "Olam Haba", def: "\"Thế giới sẽ đến\" — đời sau, theo tư tưởng Do Thái giáo." },
+  { term: "Gan Eden", def: "Vườn Địa Đàng — trong tư tưởng Do Thái, cũng chỉ nơi an nghỉ của người công chính sau khi qua đời." },
+  { term: "Gehinnom", def: "Nơi thanh luyện linh hồn sau khi chết, theo quan niệm Do Thái giáo — không đồng nhất với hỏa ngục vĩnh viễn." },
+  { term: "Malach", def: "Thiên thần — sứ giả của Thiên Chúa trong tư tưởng Do Thái." },
+  { term: "Mitzvah", def: "Điều răn — một trong 613 giới luật của Torah, hoặc rộng hơn là một việc thiện." },
+  { term: "Aliyah", def: "\"Đi lên\" — vinh dự được gọi lên đọc Torah trong hội đường (cũng là từ chỉ việc di cư về Israel)." },
+];
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+export const GLOSSARY_MAP: ReadonlyMap<string, GlossaryTerm> = new Map(
+  GLOSSARY.map((g) => [g.term.toLowerCase(), g]),
+);
+
+/**
+ * Matches any glossary term as a whole word/phrase, longest-first so e.g. "Sefer Torah"
+ * wins over a bare "Torah" inside it. Capturing group so String.split() keeps the matched
+ * term inline with the surrounding text — see GlossaryText.tsx.
+ */
+export const GLOSSARY_PATTERN = new RegExp(
+  `\\b(${[...GLOSSARY]
+    .sort((a, b) => b.term.length - a.term.length)
+    .map((g) => escapeRegExp(g.term))
+    .join("|")})\\b`,
+  "gi",
+);

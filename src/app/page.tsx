@@ -5,6 +5,7 @@ import { HebrewMarquee } from "@/components/HebrewMarquee";
 import { ContinueReading } from "@/components/reader/ContinueReading";
 import { getIndex } from "@/lib/sefaria";
 import { HERO_QUOTES, viBook, viCategory } from "@/lib/vi";
+import { GlossaryText } from "@/components/GlossaryText";
 
 export const revalidate = 21600; // 6h
 
@@ -181,7 +182,9 @@ export default async function HomePage() {
                   <h3 className="font-display text-2xl text-parchment">
                     {meta.name}
                   </h3>
-                  <p className="mt-2 text-sm text-parchment/70">{meta.desc}</p>
+                  <p className="mt-2 text-sm text-parchment/70">
+                    <GlossaryText text={meta.desc} />
+                  </p>
                   <p className="mt-4 text-xs text-[#d4af37]/80">
                     Bắt đầu với “{c.ref}” →
                   </p>
