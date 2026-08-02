@@ -105,7 +105,10 @@ export function AudioCantillationBar({ book, chapter }: { book: string; chapter:
       <audio
         ref={audioRef}
         key={track.url}
-        src={track.url}
+        // Proxied same-origin (see /api/audio-cantillation/stream) — raw.githubusercontent.com
+        // serves every file with Content-Disposition: attachment, which silently prevents
+        // browsers from ever playing it as an <audio> source (verified live 2026-08-02).
+        src={`/api/audio-cantillation/stream?url=${encodeURIComponent(track.url)}`}
         preload="none"
         aria-label={`Bản ghi âm ${track.clips[0]?.source ?? "Torah"} cho ${buildRef(book, chapter)}`}
         onTimeUpdate={handleTimeUpdate}

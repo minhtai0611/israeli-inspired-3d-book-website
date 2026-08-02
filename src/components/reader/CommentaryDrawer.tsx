@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import type { VerseLink } from "@/lib/sefaria";
 
@@ -64,10 +64,19 @@ export function CommentaryDrawer({
   // z-index is only compared against siblings WITHIN that ancestor's stacking context, not
   // against <SiteHeader>'s z-50 sibling) — verified live 2026-07-31, the drawer's own header/
   // close button rendered visually and hit-test BEHIND SiteHeader despite z-[60] > z-50.
-  // document.body isn't available during SSR (Next.js pre-renders "use client" components
-  // too) — unlike waiting a tick for an effect, document is synchronously available on the
-  // very first client render, so a plain typeof check needs no state/effect at all.
-  const canUseDom = typeof document !== "undefined";
+  // Mounted-via-useSyncExternalStore (not a plain `typeof document !== "undefined"` check,
+  // and not a setState-in-effect either): a bare typeof check is false during SSR but true on
+  // the very first CLIENT render too, so the client's initial render (which hydration compares
+  // against the server HTML) would already try to render the portal while the server rendered
+  // nothing — a genuine hydration mismatch (React error #418, confirmed live in production
+  // 2026-08-02, not just a dev-mode warning). useSyncExternalStore's getServerSnapshot is used
+  // for both the server render AND the client's hydration pass, so they match (both false);
+  // only once hydration has committed does the client snapshot (always true) take over.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -79,7 +88,7 @@ export function CommentaryDrawer({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
-  if (!canUseDom) return null;
+  if (!mounted) return null;
 
   return createPortal(
     <>

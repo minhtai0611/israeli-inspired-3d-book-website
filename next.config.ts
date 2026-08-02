@@ -12,12 +12,11 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self' data:",
-  // AudioCantillationBar plays PocketTorah recordings straight from GitHub's raw content
-  // host (see getAudioCantillation() in src/lib/sefaria.ts) — without this, media-src falls
-  // back to default-src 'self' and the browser silently refuses to load the <audio> src
-  // (verified live 2026-08-02: play() rejected with NotSupportedError / "Media load
-  // rejected by URL safety check" until this was added).
-  "media-src 'self' https://raw.githubusercontent.com",
+  // AudioCantillationBar's <audio> plays through /api/audio-cantillation/stream (same origin),
+  // not raw.githubusercontent.com directly — that host serves every file with
+  // `Content-Disposition: attachment`, which silently prevents browsers from ever playing it
+  // as a media source regardless of CSP (verified live 2026-08-02). media-src falling back to
+  // default-src 'self' is exactly right for the proxied same-origin src.
   "connect-src 'self'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
