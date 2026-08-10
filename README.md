@@ -130,6 +130,10 @@ Create a `.env` file with:
 
 ```
 DATABASE_URL=postgresql://user:password@localhost:5432/app_db
+# In production (Vercel + Neon), this MUST be Neon's pooled connection string
+# (the "-pooler" host, PgBouncer on port 6543) — src/db/index.ts opens a plain
+# node-postgres Pool, and Vercel Functions can exhaust Neon's connection limit
+# fast if pointed at the direct (non-pooled) endpoint instead.
 
 # Optional — only needed if you're serving from a custom domain. Falls back to the
 # Vercel deployment URL, then http://localhost:3000. See src/lib/site.ts.
