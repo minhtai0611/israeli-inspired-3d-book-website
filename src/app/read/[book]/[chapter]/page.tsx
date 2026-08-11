@@ -25,7 +25,7 @@ export const revalidate = 43200;
 // Every other chapter still renders on-demand and is cached after its first
 // request (ISR) — this only pins the Torah + Psalms + five Megillot + Pirkei
 // Avot (all plain integer chapters, verified against the live API) to build
-// time, matching src/app/sach/[book]/page.tsx's own generateStaticParams.
+// time, matching src/app/book/[book]/page.tsx's own generateStaticParams.
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${label} — ${unit} ${chapter}`,
     description: `Đọc toàn văn ${label} ${unit.toLowerCase()} ${chapter}, song ngữ Hebrew (מקרא על פי המסורה) và Anh, cung cấp bởi Sefaria.`,
     alternates: {
-      canonical: `/doc/${encodeURIComponent(title)}/${encodeURIComponent(chapter)}`,
+      canonical: `/read/${encodeURIComponent(title)}/${encodeURIComponent(chapter)}`,
     },
     openGraph: {
       title: `${label} · ${unit} ${chapter} — Sifria`,
@@ -83,7 +83,7 @@ export default async function ReaderPage({ params }: Props) {
 
   // Sefaria sometimes accepts an out-of-range ref (e.g. "Berakhot 999") and
   // silently CLAMPS it to some other valid ref instead of erroring — this is
-  // the crawler-trap bug where /doc/Berakhot/999, /5000, etc. all render the
+  // the crawler-trap bug where /read/Berakhot/999, /5000, etc. all render the
   // same content as a real chapter with a fabricated "canonical" URL. Reject
   // anything Sefaria didn't resolve to the exact ref requested (or a deeper
   // refinement of it, e.g. a bare complex-node ref auto-resolving to its
@@ -123,7 +123,7 @@ export default async function ReaderPage({ params }: Props) {
     // book name ends.
     const segment = segmentFromRef(r, data.indexTitle);
     if (segment === r) return null; // couldn't find the index title prefix — don't link somewhere broken
-    return `/doc/${encodeURIComponent(data.indexTitle)}/${encodeURIComponent(segment)}`;
+    return `/read/${encodeURIComponent(data.indexTitle)}/${encodeURIComponent(segment)}`;
   };
 
   const prevHref = linkFromRef(prevRef);
@@ -148,13 +148,13 @@ export default async function ReaderPage({ params }: Props) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Trang chủ", item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: "Thư viện", item: `${SITE_URL}/thu-vien` },
-      { "@type": "ListItem", position: 3, name: label, item: `${SITE_URL}/sach/${encodeURIComponent(title)}` },
+      { "@type": "ListItem", position: 2, name: "Thư viện", item: `${SITE_URL}/library` },
+      { "@type": "ListItem", position: 3, name: label, item: `${SITE_URL}/book/${encodeURIComponent(title)}` },
       {
         "@type": "ListItem",
         position: 4,
         name: `${unitLabel} ${chapter}`,
-        item: `${SITE_URL}/doc/${encodeURIComponent(title)}/${encodeURIComponent(chapter)}`,
+        item: `${SITE_URL}/read/${encodeURIComponent(title)}/${encodeURIComponent(chapter)}`,
       },
     ],
   };
@@ -174,12 +174,12 @@ export default async function ReaderPage({ params }: Props) {
         <div>
           <Link href="/" className="hover:text-[#d4af37]">Trang chủ</Link>
           <span className="mx-2">/</span>
-          <Link href="/thu-vien" className="hover:text-[#d4af37]">
+          <Link href="/library" className="hover:text-[#d4af37]">
             Thư viện
           </Link>
           <span className="mx-2">/</span>
           <Link
-            href={`/sach/${encodeURIComponent(title)}`}
+            href={`/book/${encodeURIComponent(title)}`}
             className="hover:text-[#d4af37]"
           >
             {label}
@@ -253,7 +253,7 @@ export default async function ReaderPage({ params }: Props) {
 
       <div className="mt-10 text-center">
         <Link
-          href={`/sach/${encodeURIComponent(title)}`}
+          href={`/book/${encodeURIComponent(title)}`}
           className="btn-outline text-sm"
         >
           ↑ Về mục lục “{label}”

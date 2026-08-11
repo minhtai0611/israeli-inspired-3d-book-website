@@ -10,7 +10,7 @@ import { useState } from "react";
 // requires a Client Component (Next.js app-router rule) and is only pulled
 // into the client bundle once a user toggles it — the default orbit above
 // stays 0 added bytes for the 95% of visitors who never click the button.
-const TorahScroll3D = dynamic(() => import("./ba-d/torah-scroll-3d"), {
+const TorahScroll3D = dynamic(() => import("./3d/torah-scroll-3d"), {
   ssr: false,
   loading: () => (
     <div className="flex aspect-square w-full max-w-[520px] items-center justify-center text-sm text-parchment/60">

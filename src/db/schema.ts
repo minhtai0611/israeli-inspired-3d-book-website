@@ -1,10 +1,10 @@
 // Metadata/search foundation for mirroring the Sefaria index into Postgres, plus
-// anonymous (no-login) reader retention tables. /thu-vien, /thu-vien/[category],
-// and /tim-kiem read from `books`/`categories` here (src/lib/library-db.ts),
+// anonymous (no-login) reader retention tables. /library, /library/[category],
+// and /search read from `books`/`categories` here (src/lib/library-db.ts),
 // falling back to the live Sefaria index if the DB is unreachable or hasn't
-// been synced yet. /doc's chapter text is mirrored on read into
+// been synced yet. /read's chapter text is mirrored on read into
 // chapter_text_cache (7-day staleness window) by getText() in
-// src/lib/sefaria.ts; /sach's book-index (table of contents) still isn't
+// src/lib/sefaria.ts; /book's book-index (table of contents) still isn't
 // mirrored. See docs/db-sync.md and
 // scripts/sync-sefaria-index.ts / src/lib/sync-catalog.ts for how `books` gets
 // populated and verified. reading_history/reading_progress mirror the

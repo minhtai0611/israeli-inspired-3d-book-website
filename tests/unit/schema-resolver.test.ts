@@ -260,7 +260,7 @@ describe("segmentFromRef", () => {
     // implementation split on the LAST space in the whole ref, which chopped
     // the final word off as a fake "chapter" instead of using the known
     // index title to find the real boundary — producing a ref that doesn't
-    // exist and 500ing /doc/[book]/[chapter].
+    // exist and 500ing /read/[book]/[chapter].
     expect(
       segmentFromRef(
         "Guide for the Perplexed, Introduction of Ibn Tibon",

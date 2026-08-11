@@ -51,7 +51,7 @@ async function fetchStatus(url: string): Promise<number> {
 }
 
 async function checkLeaf(book: string, segment: string): Promise<LeafResult> {
-  const href = `/doc/${encodeURIComponent(book)}/${encodeURIComponent(segment)}`;
+  const href = `/read/${encodeURIComponent(book)}/${encodeURIComponent(segment)}`;
   let status = -1;
   let html = "";
   try {
@@ -65,13 +65,13 @@ async function checkLeaf(book: string, segment: string): Promise<LeafResult> {
   const nextIdx = html.indexOf("Chương tiếp");
   let nextHref: string | null = null;
   if (nextIdx !== -1) {
-    const before = html.lastIndexOf('href="/doc/', nextIdx);
+    const before = html.lastIndexOf('href="/read/', nextIdx);
     if (before !== -1) nextHref = /href="([^"]*)"/.exec(html.slice(before))?.[1] ?? null;
   }
   const prevIdx = html.indexOf("Chương trước");
   let prevHref: string | null = null;
   if (prevIdx !== -1) {
-    const before = html.lastIndexOf('href="/doc/', prevIdx);
+    const before = html.lastIndexOf('href="/read/', prevIdx);
     if (before !== -1) prevHref = /href="([^"]*)"/.exec(html.slice(before))?.[1] ?? null;
   }
 

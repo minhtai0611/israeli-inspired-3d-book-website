@@ -771,7 +771,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 }
 ```
 
-**`src/app/doc/[book]/[chapter]/loading.tsx`** + **`src/app/sach/[book]/loading.tsx`**: skeleton nền giấy (dùng `.parchment`, `animate-pulse`, và **phải** tôn trọng `prefers-reduced-motion` đã có trong `globals.css`).
+**`src/app/read/[book]/[chapter]/loading.tsx`** + **`src/app/book/[book]/loading.tsx`**: skeleton nền giấy (dùng `.parchment`, `animate-pulse`, và **phải** tôn trọng `prefers-reduced-motion` đã có trong `globals.css`).
 
 ## ✅ CỔNG NGHIỆM THU PHA 1
 
@@ -807,7 +807,7 @@ mcp__gitnexus__context(repo="sifria", symbol="getBookIndex")
 mcp__gitnexus__impact(repo="sifria", symbol="getBookIndex", depth=3)
 mcp__gitnexus__trace(repo="sifria", from="BookPage", to="getBookIndex")
 mcp__serena__find_referencing_symbols(name_path="getBookIndex", relative_path="src/lib/sefaria.ts")
-mcp__serena__find_symbol(name_path="BookPage", relative_path="src/app/sach/[book]/page.tsx", include_body=true)
+mcp__serena__find_symbol(name_path="BookPage", relative_path="src/app/book/[book]/page.tsx", include_body=true)
 ```
 
 **Ghi lại danh sách call site vào memory trước khi sửa.**
@@ -1122,8 +1122,8 @@ describe("segmentHopLe — chặn URL bịa", () => {
 ## 5.5 Cắm vào `sach/[book]/page.tsx`
 
 ```
-mcp__serena__find_symbol(name_path="BookPage", relative_path="src/app/sach/[book]/page.tsx", include_body=true)
-mcp__serena__replace_symbol_body(name_path="BookPage", relative_path="src/app/sach/[book]/page.tsx", body="<thân mới>")
+mcp__serena__find_symbol(name_path="BookPage", relative_path="src/app/book/[book]/page.tsx", include_body=true)
+mcp__serena__replace_symbol_body(name_path="BookPage", relative_path="src/app/book/[book]/page.tsx", body="<thân mới>")
 ```
 
 Thay đổi cốt lõi:
@@ -1150,7 +1150,7 @@ Thay đổi cốt lõi:
 
 ```
 mcp__gitnexus__detect_changes(repo="sifria")
-mcp__serena__get_diagnostics_for_file(relative_path="src/app/sach/[book]/page.tsx")
+mcp__serena__get_diagnostics_for_file(relative_path="src/app/book/[book]/page.tsx")
 mcp__gitnexus__impact(repo="sifria", symbol="giaiCauTruc")
 ```
 
@@ -1192,7 +1192,7 @@ Hàng phòng thủ đang **phụ thuộc hoàn toàn vào upstream**.
 
 ## 6.2 Validate biên ở tầng app
 
-Trong `src/app/doc/[book]/[chapter]/page.tsx`:
+Trong `src/app/read/[book]/[chapter]/page.tsx`:
 
 ```ts
 const index = await getBookIndex(title).catch(() => null);
@@ -1269,7 +1269,7 @@ try {
 
 ## 6.4 Trả 503 đúng semantics cho lỗi upstream
 
-Vì App Router không cho set status tuỳ ý từ page, dùng **route segment config + error boundary**, hoặc đơn giản nhất: thêm `src/app/doc/[book]/[chapter]/error.tsx` với thông điệp rõ ràng, **và** thêm một API `/api/status/sefaria` để monitoring biết. Nếu cần 503 thật, chuyển sang `middleware.ts` kiểm tra health cache — nhưng **chỉ làm nếu còn thời gian** (P2).
+Vì App Router không cho set status tuỳ ý từ page, dùng **route segment config + error boundary**, hoặc đơn giản nhất: thêm `src/app/read/[book]/[chapter]/error.tsx` với thông điệp rõ ràng, **và** thêm một API `/api/status/sefaria` để monitoring biết. Nếu cần 503 thật, chuyển sang `middleware.ts` kiểm tra health cache — nhưng **chỉ làm nếu còn thời gian** (P2).
 
 Điều **bắt buộc** ở pha này: **không được `notFound()` khi Sefaria sập** — vì Google sẽ deindex sách có thật.
 
@@ -1333,7 +1333,7 @@ grep -rn "force-dynamic\|cookies()\|headers()\|searchParams" src/app src/compone
 ## 7.2 Thêm `generateStaticParams` cho ~200 chương phổ biến
 
 ```ts
-// src/app/doc/[book]/[chapter]/page.tsx
+// src/app/read/[book]/[chapter]/page.tsx
 export const revalidate = 43200;
 export const dynamicParams = true;   // vẫn cho phép ISR on-demand cho chương khác
 
@@ -1361,7 +1361,7 @@ Tương tự cho `/sach/[book]` với ~50 sách phổ biến nhất.
 Chuyển filter/sort/paginate lên server qua `searchParams`:
 
 ```tsx
-// src/app/thu-vien/[category]/page.tsx
+// src/app/library/[category]/page.tsx
 type Props = {
   params: Promise<{ category: string }>;
   searchParams: Promise<{ q?: string; sort?: "az" | "default"; page?: string }>;
@@ -1490,7 +1490,7 @@ export default async function OG() {
 }
 ```
 
-Và `src/app/doc/[book]/[chapter]/opengraph-image.tsx` với tên sách tiếng Việt + Hebrew + số chương.
+Và `src/app/read/[book]/[chapter]/opengraph-image.tsx` với tên sách tiếng Việt + Hebrew + số chương.
 
 ## 8.3 BreadcrumbList JSON-LD
 

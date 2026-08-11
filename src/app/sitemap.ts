@@ -30,17 +30,17 @@ const buildAllRoutes = cache(async (): Promise<MetadataRoute.Sitemap> => {
   const now = new Date();
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${BASE}/`, lastModified: now, changeFrequency: "daily", priority: 1 },
-    { url: `${BASE}/thu-vien`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${BASE}/ve-chung-toi`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE}/library`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${BASE}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
   ];
 
-  // /doc coverage: the popular set is the only part of the catalog verified
+  // /read coverage: the popular set is the only part of the catalog verified
   // to reliably resolve to real content on the primary path (see the
   // schema-resolver fix and audit-coverage.ts) — everything else risks
   // indexing a chapter that 404s or is genuinely empty in Sefaria's data.
   const docRoutes: MetadataRoute.Sitemap = POPULAR_BOOKS.flatMap(([title, chapterCount]) =>
     Array.from({ length: chapterCount }, (_, i) => ({
-      url: `${BASE}/doc/${encodeURIComponent(title)}/${i + 1}`,
+      url: `${BASE}/read/${encodeURIComponent(title)}/${i + 1}`,
       lastModified: now,
       changeFrequency: "yearly" as const,
       priority: 0.8,
@@ -53,13 +53,13 @@ const buildAllRoutes = cache(async (): Promise<MetadataRoute.Sitemap> => {
     const grouped = groupByCategory(books);
 
     const categoryRoutes: MetadataRoute.Sitemap = [...grouped.keys()].map((cat) => ({
-      url: `${BASE}/thu-vien/${categorySlug(cat)}`,
+      url: `${BASE}/library/${categorySlug(cat)}`,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.6,
     }));
     const bookRoutes: MetadataRoute.Sitemap = books.map((b) => ({
-      url: `${BASE}/sach/${encodeURIComponent(b.title)}`,
+      url: `${BASE}/book/${encodeURIComponent(b.title)}`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.7,
@@ -67,7 +67,7 @@ const buildAllRoutes = cache(async (): Promise<MetadataRoute.Sitemap> => {
     return [...staticRoutes, ...docRoutes, ...categoryRoutes, ...bookRoutes];
   } catch {
     const bookRoutes: MetadataRoute.Sitemap = CORE_BOOKS.map((b) => ({
-      url: `${BASE}/sach/${encodeURIComponent(b)}`,
+      url: `${BASE}/book/${encodeURIComponent(b)}`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.7,

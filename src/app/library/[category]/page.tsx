@@ -54,7 +54,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   return {
     title: `${meta.name} · Toàn bộ tác phẩm`,
     description: `${meta.desc} Duyệt toàn bộ tác phẩm trong bộ “${meta.name}”, tìm nhanh theo tên sách.`,
-    alternates: { canonical: `/thu-vien/${categorySlug(category)}` },
+    alternates: { canonical: `/library/${categorySlug(category)}` },
     robots: isFiltered ? { index: false, follow: true } : { index: true, follow: true },
   };
 }
@@ -100,7 +100,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     const nextPage = overrides.page ?? currentPage;
     if (nextPage > 1) qs.set("page", String(nextPage));
     const query = qs.toString();
-    return `/thu-vien/${categorySlug(category!)}${query ? `?${query}` : ""}`;
+    return `/library/${categorySlug(category!)}${query ? `?${query}` : ""}`;
   };
 
   return (
@@ -108,7 +108,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
       <nav className="mb-6 text-xs uppercase tracking-[0.28em] text-parchment/60">
         <Link href="/" className="hover:text-[#d4af37]">Trang chủ</Link>
         <span className="mx-2">/</span>
-        <Link href="/thu-vien" className="hover:text-[#d4af37]">Thư viện</Link>
+        <Link href="/library" className="hover:text-[#d4af37]">Thư viện</Link>
         <span className="mx-2">/</span>
         <span className="text-[#d4af37]">{meta.name}</span>
       </nav>
@@ -172,7 +172,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             return (
               <Link
                 key={b.title}
-                href={`/sach/${encodeURIComponent(b.title)}`}
+                href={`/book/${encodeURIComponent(b.title)}`}
                 className="card-3d glass group relative overflow-hidden rounded-2xl p-5"
               >
                 <div className="card-inner">

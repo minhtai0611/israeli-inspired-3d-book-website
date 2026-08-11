@@ -6,7 +6,7 @@ Accepted, implemented in `src/lib/library-db.ts` + `src/lib/sync-catalog.ts`.
 
 ## Context
 
-`/thu-vien`, `/thu-vien/[category]`, and `/tim-kiem` fetched Sefaria's `/index` tree live on every
+`/library`, `/library/[category]`, and `/search` fetched Sefaria's `/index` tree live on every
 request. That payload is measured at ~5.3MB — over Next.js's 2MB Data Cache per-entry limit (the
 production build log literally prints `Failed to set Next.js data cache for
 https://www.sefaria.org/api/index, items over 2MB can not be cached`), so a cold request never gets
@@ -21,11 +21,11 @@ actually read from it.
 Read the catalog from Postgres for browsing/search, with a live-Sefaria fallback if the DB throws
 or returns zero readable books (covers both real outages and "sync hasn't run yet").
 `src/lib/library-db.ts` deliberately returns the *same* `FlatBook[]` shape the live-fetch path
-already produced, so `/thu-vien`, `/thu-vien/[category]`, and `/tim-kiem` keep using the existing,
+already produced, so `/library`, `/library/[category]`, and `/search` keep using the existing,
 tested `library.ts` helpers (`groupByCategory`/`sortCategories`/`searchBooks`) completely unchanged
 on top of it — only the data *source* changes.
 
-`/sach/[book]` and `/doc/[book]/[chapter]` are **not** wired to Postgres — they read individual book
+`/book/[book]` and `/read/[book]/[chapter]` are **not** wired to Postgres — they read individual book
 tables-of-contents and chapter text, which isn't mirrored, only catalog metadata (title, Hebrew
 title, category, Vietnamese name, verified readability) is.
 
@@ -51,11 +51,11 @@ a manual CLI operation (`npm run sync:sefaria`).
   (matching the plan's originally-lower-priority framing, since ADR 0001 already fixes readability
   at *request* time). Considered, but the user explicitly chose the full scope including DB-level
   verification, mainly so the sitemap (a separate concern) can eventually filter to
-  verified-readable books rather than the current popular-books-only `/doc` coverage.
+  verified-readable books rather than the current popular-books-only `/read` coverage.
 
 ## Consequences
 
-`/thu-vien`/`/thu-vien/[category]`/`/tim-kiem` no longer depend on a 5.3MB live fetch for their
+`/library`/`/library/[category]`/`/search` no longer depend on a 5.3MB live fetch for their
 primary data; `/api/health` now reports `{ok, lastSync, booksCount, readableCount}` from the synced
 data. The full sync (6,598 books) completed at 98.45% readable — closely matching the independent
 sample-based coverage audit (98.5%) as a cross-check. The metadata-only cron mode intentionally never

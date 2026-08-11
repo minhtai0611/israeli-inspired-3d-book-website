@@ -1,6 +1,6 @@
 /**
  * The Torah, Psalms, the five Megillot, and Pirkei Avot — the highest-traffic
- * titles, prerendered at build time so /sach and /doc serve them from the CDN
+ * titles, prerendered at build time so /book and /read serve them from the CDN
  * instead of rendering on every request. Chapter counts verified against the
  * live Sefaria API (2026-07-26), not assumed.
  */

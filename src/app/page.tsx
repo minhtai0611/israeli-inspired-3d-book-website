@@ -82,10 +82,10 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3 rise rise-2">
-              <Link href="/doc/Genesis/1" className="btn-gold">
+              <Link href="/read/Genesis/1" className="btn-gold">
                 <span aria-hidden>📖</span> Đọc Sáng Thế Ký · Chương 1
               </Link>
-              <Link href="/thu-vien" className="btn-outline">
+              <Link href="/library" className="btn-outline">
                 Khám phá {categoriesCount || 20}+ bộ sưu tập
               </Link>
             </div>
@@ -160,7 +160,7 @@ export default async function HomePage() {
               thế kỷ III tới tư tưởng Israel đương đại — chọn nơi để bước vào.
             </p>
           </div>
-          <Link href="/thu-vien" className="btn-outline text-sm">
+          <Link href="/library" className="btn-outline text-sm">
             Xem toàn bộ →
           </Link>
         </div>
@@ -171,7 +171,7 @@ export default async function HomePage() {
             return (
               <Link
                 key={c.key}
-                href={`/sach/${encodeURIComponent(c.ref)}`}
+                href={`/book/${encodeURIComponent(c.ref)}`}
                 className="tile card-3d glass block p-6"
                 style={{ animationDelay: `${i * 60}ms` }}
               >
@@ -215,7 +215,7 @@ export default async function HomePage() {
             return (
               <Link
                 key={f.book + f.chapter}
-                href={`/doc/${encodeURIComponent(f.book)}/${f.chapter}`}
+                href={`/read/${encodeURIComponent(f.book)}/${f.chapter}`}
                 className="card-3d glass-strong group relative block overflow-hidden rounded-3xl p-6"
               >
                 {/* embossed hebrew number */}
@@ -314,10 +314,10 @@ export default async function HomePage() {
             thánh ca của David, hành trình chỉ cách một cú chạm.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href="/doc/Genesis/1" className="btn-gold">
+            <Link href="/read/Genesis/1" className="btn-gold">
               Bắt đầu với Sáng Thế 1
             </Link>
-            <Link href="/thu-vien" className="btn-outline">
+            <Link href="/library" className="btn-outline">
               Duyệt toàn thư viện
             </Link>
           </div>

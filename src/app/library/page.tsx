@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Thư viện · Duyệt toàn bộ bộ sưu tập sách Israel",
   description:
     "Khám phá toàn bộ thư viện Sifria: Torah, Nabiim, Ketubim, Mishnah, Talmud, Kabbalah, Midrash, Halakhah, Chasidut và nhiều bộ khác — mỗi cuốn với chương mục đầy đủ.",
-  alternates: { canonical: "/thu-vien" },
+  alternates: { canonical: "/library" },
 };
 
 export default async function LibraryPage() {
@@ -96,7 +96,7 @@ export default async function LibraryPage() {
                   </div>
                 </div>
                 <Link
-                  href={`/thu-vien/${categorySlug(cat)}`}
+                  href={`/library/${categorySlug(cat)}`}
                   className="text-xs uppercase tracking-[0.28em] text-[#d4af37]/70 hover:text-[#d4af37]"
                 >
                   {list.length} tác phẩm →
@@ -109,7 +109,7 @@ export default async function LibraryPage() {
                   return (
                     <Link
                       key={b.title}
-                      href={`/sach/${encodeURIComponent(b.title)}`}
+                      href={`/book/${encodeURIComponent(b.title)}`}
                       className="card-3d glass group relative overflow-hidden rounded-2xl p-5"
                     >
                       <div className="card-inner">
@@ -140,7 +140,7 @@ export default async function LibraryPage() {
               {list.length > visible.length && (
                 <p className="mt-4 text-center text-xs text-parchment/60">
                   <Link
-                    href={`/thu-vien/${categorySlug(cat)}`}
+                    href={`/library/${categorySlug(cat)}`}
                     className="text-[#d4af37] underline decoration-[#d4af37]/40 underline-offset-2"
                   >
                     Xem thêm {list.length - visible.length} tác phẩm khác trong bộ “{meta.name}” →

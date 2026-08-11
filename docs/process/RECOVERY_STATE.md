@@ -12,12 +12,12 @@ UI. All 8 phases (A–H) of `CLAUDECODE_SIFRIA_end_to_end_fix_plan.md` are compl
 - `src/lib/reader-storage.ts` (new) — localStorage reader prefs + history, `useSyncExternalStore`-based
 - `src/app/layout.tsx`, `robots.ts`, `sitemap.ts` — SITE_URL-derived, sitemap now enumerates all real books/categories (6,615 URLs, was 24)
 - `src/app/page.tsx`, `src/components/SiteFooter.tsx`, `src/app/manifest.ts` — copy truth fixes
-- `src/app/tim-kiem/page.tsx` (new), `src/components/SearchForm.tsx` (new) — real search
-- `src/app/thu-vien/[category]/page.tsx` (new), `src/components/library/CategoryBrowser.tsx` (new) — full category listing
-- `src/app/thu-vien/page.tsx` — uses shared lib, "…N more" links to category page
+- `src/app/search/page.tsx` (new), `src/components/SearchForm.tsx` (new) — real search
+- `src/app/library/[category]/page.tsx` (new), `src/components/library/CategoryBrowser.tsx` (new) — full category listing
+- `src/app/library/page.tsx` — uses shared lib, "…N more" links to category page
 - `src/db/schema.ts` — real tables (was a placeholder); `scripts/sync-sefaria-index.ts` (new); `docs/db-sync.md` (new); `drizzle/0000_damp_the_anarchist.sql` (generated migration)
 - `src/components/reader/ReaderView.tsx`, `ContinueReading.tsx` (new) — reader controls + history
-- `src/app/doc/[book]/[chapter]/page.tsx` — uses ReaderView
+- `src/app/read/[book]/[chapter]/page.tsx` — uses ReaderView
 - `src/app/globals.css` — reduced-motion, skip-link, focus-visible
 - `src/components/SiteHeader.tsx` — search box, skip-link target unaffected
 - `next.config.ts` — security headers

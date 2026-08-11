@@ -20,7 +20,7 @@ import { toHebrewNumeral } from "./hebrew-numeral";
 export type AddressKind = "integer" | "talmud" | "complex" | "unknown";
 
 export type TocItem = {
-  /** URL-safe path segment for /doc/{book}/{segment} */
+  /** URL-safe path segment for /read/{book}/{segment} */
   segment: string;
   /** Full Sefaria ref to fetch, e.g. "Genesis 5", "Berakhot 2a", "Zohar, Introduction" */
   ref: string;
@@ -182,7 +182,7 @@ export function isValidSegment(structure: ResolvedStructure, segment: string): b
  *
  * False means Sefaria silently CLAMPED an out-of-range/invalid ref to some
  * unrelated valid one instead of erroring — the exact mechanism behind the
- * /doc/Berakhot/999 crawler-trap bug (999 clamps to "Berakhot 2a", a
+ * /read/Berakhot/999 crawler-trap bug (999 clamps to "Berakhot 2a", a
  * completely different ref, not a refinement of "Berakhot 999").
  *
  * Guards against the naive `startsWith` false-positive where "Genesis 5" is a

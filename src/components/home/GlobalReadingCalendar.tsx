@@ -3,7 +3,7 @@ import { calendarLinkTarget, getGlobalCalendars, type CalendarItem } from "@/lib
 
 /**
  * "Ánh Sáng Hôm Nay" homepage widget: today's Daf Yomi and this week's Parashat HaShavua,
- * each a direct link into /doc/[book]/[chapter]. Server Component — the calendar fetch is
+ * each a direct link into /read/[book]/[chapter]. Server Component — the calendar fetch is
  * cached 24h (getGlobalCalendars), so this costs nothing per-request beyond the cache TTL.
  * Renders nothing (not an error state) if Sefaria is unreachable or neither item is
  * present — this is a homepage enhancement, not something that should ever break the page.
@@ -39,7 +39,7 @@ export async function GlobalReadingCalendar() {
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           {parashah && parashahLink && (
             <Link
-              href={`/doc/${encodeURIComponent(parashahLink.book)}/${parashahLink.chapter}`}
+              href={`/read/${encodeURIComponent(parashahLink.book)}/${parashahLink.chapter}`}
               className="btn-gold"
             >
               📖 Parashat {parashah.displayValue.en} — Torah tuần này
@@ -47,7 +47,7 @@ export async function GlobalReadingCalendar() {
           )}
           {dafYomi && dafLink && (
             <Link
-              href={`/doc/${encodeURIComponent(dafLink.book)}/${dafLink.chapter}`}
+              href={`/read/${encodeURIComponent(dafLink.book)}/${dafLink.chapter}`}
               className="btn-outline"
             >
               📚 Daf Yomi — {dafYomi.displayValue.en}

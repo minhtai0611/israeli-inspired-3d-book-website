@@ -13,11 +13,11 @@ itself is Hebrew/English, sourced from Sefaria as-is.
 
 ## Features
 
-- Browse the full Sefaria catalog by category at `/thu-vien` and `/thu-vien/[category]`
+- Browse the full Sefaria catalog by category at `/library` and `/library/[category]`
   (server-side filter/sort/pagination via URL params — works with JavaScript disabled)
-- Search books by English/Hebrew/Vietnamese name at `/tim-kiem`, with diacritic-insensitive
+- Search books by English/Hebrew/Vietnamese name at `/search`, with diacritic-insensitive
   Vietnamese matching ("thi thien" finds "Thi Thiên")
-- Reader controls at `/doc/[book]/[chapter]`: font size, line spacing, Hebrew/English/both
+- Reader controls at `/read/[book]/[chapter]`: font size, line spacing, Hebrew/English/both
   toggle, per-verse copy-link (`#v12`-style deep links), all persisted per-browser
 - Correctly handles Sefaria's three chapter-addressing schemes (plain integer, Talmud daf, and
   named complex sections like Zohar) — see `docs/adr/0001-schema-resolver.md`
@@ -27,7 +27,7 @@ itself is Hebrew/English, sourced from Sefaria as-is.
   non-blocking, best-effort
 - Chapter text is mirrored into a Postgres cache on read (stale-while-revalidate, 7-day window —
   see `getText()` in `src/lib/sefaria.ts`) so a repeat chapter view skips the Sefaria round-trip
-- Bilingual full-text verse search at `/tim-kiem` (mode toggle next to the existing book-title
+- Bilingual full-text verse search at `/search` (mode toggle next to the existing book-title
   search) — searches Sefaria's text corpus directly, not just titles/metadata
 - Click a verse number to open a drawer of classical commentary/Targum for that verse
   (`CommentaryDrawer.tsx`), capped and metadata-first to stay fast even on heavily-annotated verses
@@ -47,17 +47,17 @@ itself is Hebrew/English, sourced from Sefaria as-is.
   `GlossaryTooltip` wherever it appears in category/book descriptions — hover/focus/click to
   open, zero layout shift
 - "Ánh Sáng Hôm Nay" home page widget: today's Daf Yomi and this week's Parashat HaShavua,
-  each linking straight into `/doc/[book]/[chapter]`, from Sefaria's calendars API
+  each linking straight into `/read/[book]/[chapter]`, from Sefaria's calendars API
   (`getGlobalCalendars()`, 24h cache)
 
 ## Tech stack
 
 - [Next.js 16](https://nextjs.org) (App Router) + React 19 + TypeScript
 - [Tailwind CSS v4](https://tailwindcss.com)
-- [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL — `/thu-vien`, `/thu-vien/[category]`, and
-  `/tim-kiem` read the catalog from here (falling back to a live Sefaria fetch if the DB is
-  unreachable); `/doc`'s chapter text is mirrored into a cache on read; reading progress/history
-  sync here anonymously. See `docs/db-sync.md`. `/sach`'s book table-of-contents still reads
+- [Drizzle ORM](https://orm.drizzle.team) + PostgreSQL — `/library`, `/library/[category]`, and
+  `/search` read the catalog from here (falling back to a live Sefaria fetch if the DB is
+  unreachable); `/read`'s chapter text is mirrored into a cache on read; reading progress/history
+  sync here anonymously. See `docs/db-sync.md`. `/book`'s book table-of-contents still reads
   Sefaria directly per request.
 - Content: [Sefaria](https://www.sefaria.org) Open API
 
@@ -70,8 +70,8 @@ flowchart LR
     end
     subgraph Vercel["Vercel (Next.js 16 App Router)"]
         Home["/ (GlobalReadingCalendar widget)"]
-        Browse["/thu-vien, /thu-vien/[category], /tim-kiem"]
-        Read["/sach/[book], /doc/[book]/[chapter] (+ AudioCantillationBar)"]
+        Browse["/library, /library/[category], /search"]
+        Read["/book/[book], /read/[book]/[chapter] (+ AudioCantillationBar)"]
         ProgressAPI["/api/progress/sync"]
         LinksAPI["/api/verse-links"]
         AudioAPI["/api/audio-cantillation"]
@@ -180,11 +180,11 @@ need a full production build + server running locally.
 src/
   app/
     page.tsx                    Home
-    thu-vien/                   Library: category listing (page.tsx, [category]/ — server-side
+    library/                    Library: category listing (page.tsx, [category]/ — server-side
                                  filter/sort/pagination via searchParams)
-    tim-kiem/                   Search
-    sach/[book]/                Book table of contents (+ generateStaticParams for popular books)
-    doc/[book]/[chapter]/       Reader (+ generateStaticParams for popular chapters, opengraph-image.tsx)
+    search/                     Search
+    book/[book]/                Book table of contents (+ generateStaticParams for popular books)
+    read/[book]/[chapter]/      Reader (+ generateStaticParams for popular chapters, opengraph-image.tsx)
     api/health/, api/cron/sync/ DB health check; weekly catalog metadata refresh
     api/progress/sync/          Upserts reading_progress + inserts reading_history (client-id keyed)
     api/verse-links/            Server proxy for getVerseLinks() — CommentaryDrawer fetches through this
@@ -197,7 +197,7 @@ src/
                                  document.body), ContinueReading, AudioCantillationBar
                                  (cantillation playback + verse highlight)
     home/                       GlobalReadingCalendar (Daf Yomi / Parashat HaShavua widget)
-    ba-d/                       torah-scroll-3d.tsx — opt-in interactive 3D scroll, lazy-loaded
+    3d/                         torah-scroll-3d.tsx — opt-in interactive 3D scroll, lazy-loaded
                                  from HeroOrbit.tsx via next/dynamic({ ssr: false })
     GlossaryTooltip.tsx, GlossaryText.tsx
                                  Hover/focus/click term tooltip + auto-wrap-matching-terms helper
@@ -249,11 +249,11 @@ context for each row is in the linked ADR/doc.
 | --- | --- | --- | --- |
 | Book readability (200-title sample, real click-through) | 53.5% | 98.5% | `docs/adr/0001-schema-resolver.md` |
 | Production catalog sync (6,598 books, live) | — | 98.45% verified readable | `docs/db-sync.md` |
-| `/thu-vien/Halakhah` raw HTML (2,169-book category) | 555.9 KB | 72.4 KB | `docs/adr/0003-server-side-pagination.md` |
+| `/library/Halakhah` raw HTML (2,169-book category) | 555.9 KB | 72.4 KB | `docs/adr/0003-server-side-pagination.md` |
 | Local TTFB, p50 | 640 ms | 4.9 ms | `scripts/measure.sh` baseline vs. after Phase 4 caching |
 | Lighthouse — `/` (Performance / A11y / Best Practices / SEO) | — | 77 / 98 / 100 / 100 | `.lighthouserc.json` |
-| Lighthouse — `/thu-vien` | — | 84 / 100 / 100 / 100 | `.lighthouserc.json` |
-| Lighthouse — `/doc/Genesis/1` | — | 88 / 98 / 100 / 100 | `.lighthouserc.json` |
+| Lighthouse — `/library` | — | 84 / 100 / 100 / 100 | `.lighthouserc.json` |
+| Lighthouse — `/read/Genesis/1` | — | 88 / 98 / 100 / 100 | `.lighthouserc.json` |
 
 The Performance scores (77–88) are the main known gap — not addressed by this remediation, which
 focused on correctness (readability, 404 semantics), data volume, and SEO/a11y. Likely next targets
@@ -271,7 +271,7 @@ to the assigned `*.vercel.app` URL (see `src/lib/site.ts`).
 
 Hebrew text is the Masoretic text (CC-BY-SA); English translations and book metadata are served
 via the [Sefaria](https://www.sefaria.org) Open API under their respective licenses. Sifria does
-not modify or reinterpret the underlying text — see the `/ve-chung-toi` page for more on the
+not modify or reinterpret the underlying text — see the `/about` page for more on the
 project's approach.
 
 Torah cantillation audio (played by `AudioCantillationBar`) is served via Sefaria's `related_api`,

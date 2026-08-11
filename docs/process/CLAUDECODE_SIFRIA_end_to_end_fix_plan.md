@@ -150,7 +150,7 @@ Biến thư viện từ “showroom” thành “công cụ khám phá”.
 3. Không chỉ hiện “… còn N tác phẩm khác” mà phải cho người dùng đi tiếp được.
 
 ### Files có thể tạo/sửa
-- `src/app/thu-vien/page.tsx`
+- `src/app/library/page.tsx`
 - tạo route category mới nếu cần
 - component library browser riêng, ví dụ `src/components/library/*`
 
@@ -315,12 +315,12 @@ Tạo sync layer bền hơn.
 - tạo query helpers cho DB
 
 ## Phase C — library browser
-- `src/app/thu-vien/page.tsx`
+- `src/app/library/page.tsx`
 - route category/search pages mới
 - components browse/filter/pagination
 
 ## Phase D — reader + retention
-- `src/app/doc/[book]/[chapter]/page.tsx`
+- `src/app/read/[book]/[chapter]/page.tsx`
 - components reader controls
 - DB tables progress/bookmarks/history
 

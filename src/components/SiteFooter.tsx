@@ -31,11 +31,11 @@ export function SiteFooter() {
             Khám phá
           </h4>
           <ul className="space-y-2 text-sm text-parchment/75">
-            <li><Link className="hover:text-parchment" href="/thu-vien">Toàn bộ thư viện</Link></li>
-            <li><Link className="hover:text-parchment" href="/sach/Genesis">Sáng Thế Ký</Link></li>
-            <li><Link className="hover:text-parchment" href="/sach/Psalms">Thi Thiên</Link></li>
-            <li><Link className="hover:text-parchment" href="/sach/Song%20of%20Songs">Nhã Ca</Link></li>
-            <li><Link className="hover:text-parchment" href="/sach/Pirkei%20Avot">Pirkei Avot</Link></li>
+            <li><Link className="hover:text-parchment" href="/library">Toàn bộ thư viện</Link></li>
+            <li><Link className="hover:text-parchment" href="/book/Genesis">Sáng Thế Ký</Link></li>
+            <li><Link className="hover:text-parchment" href="/book/Psalms">Thi Thiên</Link></li>
+            <li><Link className="hover:text-parchment" href="/book/Song%20of%20Songs">Nhã Ca</Link></li>
+            <li><Link className="hover:text-parchment" href="/book/Pirkei%20Avot">Pirkei Avot</Link></li>
           </ul>
         </div>
         <div>
@@ -43,7 +43,7 @@ export function SiteFooter() {
             Sifria
           </h4>
           <ul className="space-y-2 text-sm text-parchment/75">
-            <li><Link className="hover:text-parchment" href="/ve-chung-toi">Về chúng tôi</Link></li>
+            <li><Link className="hover:text-parchment" href="/about">Về chúng tôi</Link></li>
             <li>
               <a
                 className="hover:text-parchment"

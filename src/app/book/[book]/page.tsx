@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       vi?.blurb ??
       `Đọc toàn văn ${title} — bản Hebrew Masoretic và bản dịch tiếng Anh chính thức từ Sefaria, hiển thị theo chương một cách trang nhã.`,
-    alternates: { canonical: `/sach/${encodeURIComponent(title)}` },
+    alternates: { canonical: `/book/${encodeURIComponent(title)}` },
   };
 }
 
@@ -76,7 +76,7 @@ export default async function BookPage({ params }: Props) {
   // "Đọc từ đầu" never lands on a blank page.
   const readableFirst = await findFirstReadableRef(structure, getText);
   const startHref = readableFirst
-    ? `/doc/${encodeURIComponent(title)}/${encodeURIComponent(readableFirst.segment)}`
+    ? `/read/${encodeURIComponent(title)}/${encodeURIComponent(readableFirst.segment)}`
     : null;
 
   const vi = viBook(title);
@@ -101,20 +101,20 @@ export default async function BookPage({ params }: Props) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Trang chủ", item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: "Thư viện", item: `${SITE_URL}/thu-vien` },
+      { "@type": "ListItem", position: 2, name: "Thư viện", item: `${SITE_URL}/library` },
       ...(topCat
         ? [{
             "@type": "ListItem",
             position: 3,
             name: catMeta?.name ?? topCat,
-            item: `${SITE_URL}/thu-vien/${categorySlug(topCat)}`,
+            item: `${SITE_URL}/library/${categorySlug(topCat)}`,
           }]
         : []),
       {
         "@type": "ListItem",
         position: topCat ? 4 : 3,
         name: label,
-        item: `${SITE_URL}/sach/${encodeURIComponent(title)}`,
+        item: `${SITE_URL}/book/${encodeURIComponent(title)}`,
       },
     ],
   };
@@ -133,7 +133,7 @@ export default async function BookPage({ params }: Props) {
       <nav className="mb-6 text-xs uppercase tracking-[0.28em] text-parchment/60">
         <Link href="/" className="hover:text-[#d4af37]">Trang chủ</Link>
         <span className="mx-2">/</span>
-        <Link href="/thu-vien" className="hover:text-[#d4af37]">Thư viện</Link>
+        <Link href="/library" className="hover:text-[#d4af37]">Thư viện</Link>
         {topCat && (
           <>
             <span className="mx-2">/</span>
@@ -197,7 +197,7 @@ export default async function BookPage({ params }: Props) {
             {structure.items.map((item) => (
               <li key={item.segment}>
                 <Link
-                  href={`/doc/${encodeURIComponent(title)}/${encodeURIComponent(item.segment)}`}
+                  href={`/read/${encodeURIComponent(title)}/${encodeURIComponent(item.segment)}`}
                   className="glass card-3d group flex aspect-[4/5] flex-col items-center justify-center gap-1 rounded-2xl p-2 text-center transition"
                 >
                   {item.heLabel && (
@@ -219,7 +219,7 @@ export default async function BookPage({ params }: Props) {
         ) : (
           <p className="glass rounded-2xl p-6 text-center text-parchment/70">
             Sách này chưa xác định được cấu trúc chương/mục từ Sefaria. Hãy quay lại{" "}
-            <Link href="/thu-vien" className="text-[#d4af37] underline">
+            <Link href="/library" className="text-[#d4af37] underline">
               thư viện
             </Link>{" "}
             để chọn một cuốn khác.

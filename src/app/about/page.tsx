@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Về Sifria — Sứ mệnh và nguồn sách",
   description:
     "Sifria (סִפְרִיָּה) là dự án đọc sách trực tuyến tiếng Việt lấy cảm hứng từ Israel. Tìm hiểu sứ mệnh, thẩm mỹ và nguồn dữ liệu Sefaria Open API.",
-  alternates: { canonical: "/ve-chung-toi" },
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {
@@ -67,10 +67,10 @@ export default function AboutPage() {
       </div>
 
       <div className="mt-10 flex flex-wrap justify-center gap-3">
-        <Link href="/thu-vien" className="btn-gold">
+        <Link href="/library" className="btn-gold">
           Vào thư viện
         </Link>
-        <Link href="/doc/Genesis/1" className="btn-outline">
+        <Link href="/read/Genesis/1" className="btn-outline">
           Đọc trang đầu tiên
         </Link>
       </div>

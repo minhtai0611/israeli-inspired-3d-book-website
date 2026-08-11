@@ -1,4 +1,4 @@
-// Plain GET form to /tim-kiem — works with JS disabled, no client component needed.
+// Plain GET form to /search — works with JS disabled, no client component needed.
 export function SearchForm({
   defaultValue = "",
   compact = false,
@@ -11,7 +11,7 @@ export function SearchForm({
   return (
     <form
       role="search"
-      action="/tim-kiem"
+      action="/search"
       method="get"
       className={compact ? "flex items-center gap-2" : "flex flex-wrap items-center gap-3"}
     >

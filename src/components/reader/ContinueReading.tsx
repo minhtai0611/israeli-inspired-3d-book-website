@@ -28,7 +28,7 @@ export function ContinueReading() {
         {history.map((h) => (
           <Link
             key={`${h.book}-${h.chapter}`}
-            href={`/doc/${encodeURIComponent(h.book)}/${encodeURIComponent(h.chapter)}`}
+            href={`/read/${encodeURIComponent(h.book)}/${encodeURIComponent(h.chapter)}`}
             className="glass card-3d block w-56 flex-shrink-0 rounded-2xl p-4"
           >
             <div className="card-inner">

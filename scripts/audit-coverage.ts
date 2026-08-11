@@ -1,6 +1,6 @@
 /**
  * Measures the share of books that are actually readable through the primary
- * user path: /sach/{title} -> click "Đọc từ đầu" -> /doc/{title}/{firstSegment}.
+ * user path: /book/{title} -> click "Đọc từ đầu" -> /read/{title}/{firstSegment}.
  * The first-chapter segment is extracted from the "Đọc từ đầu" link's real
  * href rather than assumed to be "1" — Talmud books start at daf "2a" and
  * complex-schema books (e.g. Zohar) start at a named section, not a number.
@@ -43,7 +43,7 @@ function regexEscape(s: string): string {
 }
 
 /**
- * Builds a regex matching this book's own first /doc href in its /sach page.
+ * Builds a regex matching this book's own first /read href in its /book page.
  * `encodeURIComponent` leaves `. * ( ) ! ~ '` unescaped, so titles containing
  * them (parens are common in commentary titles, e.g. "Tosefta Sotah
  * (Lieberman)") need regex-escaping, and `'` also needs to match React's
@@ -51,15 +51,15 @@ function regexEscape(s: string): string {
  */
 function hrefPatternFor(encodedTitle: string): RegExp {
   const pattern = regexEscape(encodedTitle).replace(/'/g, "(?:&#x27;|&#39;|')");
-  return new RegExp(`href="(/doc/${pattern}/[^"]*)"`);
+  return new RegExp(`href="(/read/${pattern}/[^"]*)"`);
 }
 
 type Row = {
   title: string;
   category: string;
-  sachStatus: number;
+  bookStatus: number;
   firstHref: string | null;
-  docStatus: number;
+  readStatus: number;
   verses: number;
   ok: boolean;
 };
@@ -78,9 +78,9 @@ async function main() {
   for (let i = 0; i < sample.length; i += CHUNK) {
     const batch = sample.slice(i, i + CHUNK).map(async (b) => {
       const enc = encodeURIComponent(b.title);
-      const s = await fetch(`${BASE}/sach/${enc}`).catch(() => null);
-      const sachHtml = s && s.ok ? await s.text() : "";
-      const rawHref = hrefPatternFor(enc).exec(sachHtml)?.[1] ?? null;
+      const s = await fetch(`${BASE}/book/${enc}`).catch(() => null);
+      const bookHtml = s && s.ok ? await s.text() : "";
+      const rawHref = hrefPatternFor(enc).exec(bookHtml)?.[1] ?? null;
       const firstHref = rawHref ? decodeHtmlEntities(rawHref) : null;
 
       const d = firstHref ? await fetch(`${BASE}${firstHref}`).catch(() => null) : null;
@@ -89,9 +89,9 @@ async function main() {
       rows.push({
         title: b.title,
         category: b.categoryPath[0] ?? "?",
-        sachStatus: s?.status ?? 0,
+        bookStatus: s?.status ?? 0,
         firstHref,
-        docStatus: d?.status ?? 0,
+        readStatus: d?.status ?? 0,
         verses,
         ok: d?.status === 200 && verses > 0,
       });
@@ -128,11 +128,11 @@ async function main() {
     ``,
     `## Broken`,
     ``,
-    `| Book | Collection | /sach | First-chapter href | status | Verses |`,
+    `| Book | Collection | /book | First-chapter href | status | Verses |`,
     `|---|---|---|---|---|---|`,
     ...rows
       .filter((r) => !r.ok)
-      .map((r) => `| ${r.title} | ${r.category} | ${r.sachStatus} | ${r.firstHref ?? "(none)"} | ${r.docStatus} | ${r.verses} |`),
+      .map((r) => `| ${r.title} | ${r.category} | ${r.bookStatus} | ${r.firstHref ?? "(none)"} | ${r.readStatus} | ${r.verses} |`),
   ].join("\n");
 
   writeFileSync("docs/coverage-report.md", md);

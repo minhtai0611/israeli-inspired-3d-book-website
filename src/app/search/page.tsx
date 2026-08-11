@@ -16,7 +16,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   return {
     title: q ? `Tìm “${q}”` : "Tìm kiếm sách",
     description: "Tìm sách trong thư viện Sifria theo tên tiếng Anh, tiếng Hebrew, hoặc tên tiếng Việt.",
-    alternates: { canonical: q ? `/tim-kiem?q=${encodeURIComponent(q)}` : "/tim-kiem" },
+    alternates: { canonical: q ? `/search?q=${encodeURIComponent(q)}` : "/search" },
     robots: { index: false, follow: true },
   };
 }
@@ -57,7 +57,7 @@ async function resolveVerseCards(hits: VerseSearchHit[]): Promise<VerseResultCar
         // indexTitle (unexpected shape) — treat that as "couldn't build a link" like ReaderPage does.
         const chapterHref =
           segment !== data.ref
-            ? `/doc/${encodeURIComponent(data.indexTitle)}/${encodeURIComponent(segment)}`
+            ? `/read/${encodeURIComponent(data.indexTitle)}/${encodeURIComponent(segment)}`
             : null;
         return {
           ref,
@@ -176,7 +176,7 @@ export default async function SearchPage({ searchParams }: Props) {
             <nav className="mt-8 flex justify-between text-sm">
               {page > 1 ? (
                 <Link
-                  href={`/tim-kiem?q=${encodeURIComponent(trimmed)}&mode=verse&page=${page - 1}`}
+                  href={`/search?q=${encodeURIComponent(trimmed)}&mode=verse&page=${page - 1}`}
                   className="btn-outline"
                 >
                   ← Trang trước
@@ -186,7 +186,7 @@ export default async function SearchPage({ searchParams }: Props) {
               )}
               {page * 10 < verseTotal && (
                 <Link
-                  href={`/tim-kiem?q=${encodeURIComponent(trimmed)}&mode=verse&page=${page + 1}`}
+                  href={`/search?q=${encodeURIComponent(trimmed)}&mode=verse&page=${page + 1}`}
                   className="btn-outline"
                 >
                   Trang tiếp →
@@ -199,7 +199,7 @@ export default async function SearchPage({ searchParams }: Props) {
         {trimmed && mode === "title" && !error && results.length === 0 && (
           <p className="glass rounded-2xl p-6 text-center text-parchment/70">
             Không tìm thấy sách nào khớp với “{trimmed}”.{" "}
-            <Link href="/thu-vien" className="text-[#d4af37] underline">
+            <Link href="/library" className="text-[#d4af37] underline">
               Duyệt toàn bộ thư viện
             </Link>{" "}
             thay vào đó.
@@ -218,7 +218,7 @@ export default async function SearchPage({ searchParams }: Props) {
                 return (
                   <Link
                     key={b.title}
-                    href={`/sach/${encodeURIComponent(b.title)}`}
+                    href={`/book/${encodeURIComponent(b.title)}`}
                     className="card-3d glass group relative overflow-hidden rounded-2xl p-5"
                   >
                     <div className="card-inner">

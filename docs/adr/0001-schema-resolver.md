@@ -7,8 +7,8 @@ Accepted, implemented in `src/lib/schema-resolver.ts`.
 ## Context
 
 A random sample of 200 titles (seed-reproducible, `scripts/audit-coverage.ts`) showed only
-53.5% of books were readable by walking the site's own primary path: `/sach/{book}` → click
-"Đọc từ đầu" → `/doc/{book}/{first}`. `/doc/Berakhot/1` returned 200 with 0 verses; `/doc/Zohar/1`
+53.5% of books were readable by walking the site's own primary path: `/book/{book}` → click
+"Đọc từ đầu" → `/read/{book}/{first}`. `/read/Berakhot/1` returned 200 with 0 verses; `/read/Zohar/1`
 didn't exist at all.
 
 The root cause was `sach/[book]/page.tsx` assuming every Sefaria book is addressed by a flat
@@ -38,7 +38,7 @@ content before using it, following `next` past empty sections if it doesn't
 one.
 
 Also handled: Sefaria silently **clamps** an out-of-range integer ref to some other valid ref
-instead of erroring (`/doc/Berakhot/999` → 200, identical content to `/doc/Berakhot/2a`, with its
+instead of erroring (`/read/Berakhot/999` → 200, identical content to `/read/Berakhot/2a`, with its
 own `sectionRef` claiming to be canonical). `isRefRefinement` (used in the routing fix, ADR-adjacent
 but implemented alongside this resolver) compares what was requested against what Sefaria actually
 resolved to, distinguishing a genuine clamp from a bare complex-node ref legitimately auto-resolving

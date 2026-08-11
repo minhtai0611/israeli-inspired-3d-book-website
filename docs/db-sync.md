@@ -2,13 +2,13 @@
 
 ## Status today
 
-`/thu-vien`, `/thu-vien/[category]`, and `/tim-kiem` read the catalog (title, Hebrew title,
+`/library`, `/library/[category]`, and `/search` read the catalog (title, Hebrew title,
 category, Vietnamese name, and verified readability) from Postgres via `src/lib/library-db.ts`,
 falling back to a live Sefaria `/index` fetch if the DB is unreachable or returns no readable
-books (e.g. before the first sync has run). `/doc/[book]/[chapter]` reads chapter text through
+books (e.g. before the first sync has run). `/read/[book]/[chapter]` reads chapter text through
 `getText()` in `src/lib/sefaria.ts`, which mirrors each ref into `chapter_text_cache`
 (stale-while-revalidate, 7-day window) — a repeat read of the same chapter within that window
-skips the Sefaria round-trip entirely. `/sach/[book]`'s book table-of-contents is still not
+skips the Sefaria round-trip entirely. `/book/[book]`'s book table-of-contents is still not
 mirrored.
 
 The `/index` payload is ~5.3MB, over Next's 2MB data-cache limit, so a live-fetch cold request
@@ -83,5 +83,5 @@ over `books`.
 - Only 18 of 6,598 books have a `book_aliases` row today, because only that many have a
   Vietnamese label in `src/lib/vi.ts` — expanding `BOOK_VI` and re-running the full sync would
   grow that coverage.
-- `/sach`'s book table-of-contents is not DB-backed — it still reads Sefaria live per request
+- `/book`'s book table-of-contents is not DB-backed — it still reads Sefaria live per request
   (already cached via `generateStaticParams` for the popular-books set).

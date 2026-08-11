@@ -1,5 +1,5 @@
 // Shared helpers for turning a Sefaria index tree into a flat, browsable/searchable
-// book list. Used by /thu-vien, /thu-vien/[category], /tim-kiem, and sitemap.ts so
+// book list. Used by /library, /library/[category], /search, and sitemap.ts so
 // they all agree on the same book set instead of re-deriving it separately.
 import type { IndexNode } from "@/lib/sefaria";
 import { viBook, viCategory } from "@/lib/vi";

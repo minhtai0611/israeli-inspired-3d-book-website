@@ -450,7 +450,7 @@ export function flatten(text: string[] | string[][]): string[] {
  * `GET /api/calendars/` — unlike ADV-2's assumed "audio API", this endpoint genuinely
  * exists as documented. `ref` can be a verse range (e.g. "Deuteronomy 7:12-11:25" for a
  * parashah spanning several chapters) — see calendarLinkTarget() for turning it into a
- * single book+chapter this site's /doc/[book]/[chapter] route can open. */
+ * single book+chapter this site's /read/[book]/[chapter] route can open. */
 export type CalendarItem = {
   title: { en: string; he: string };
   displayValue: { en: string; he: string };
@@ -472,7 +472,7 @@ export async function getGlobalCalendars(): Promise<GlobalCalendars> {
 
 /**
  * Reduces a calendar item's `ref` to the single {book, chapter} this site's
- * /doc/[book]/[chapter] route understands — the first chapter for a multi-chapter
+ * /read/[book]/[chapter] route understands — the first chapter for a multi-chapter
  * parashah range, and daf "a" side for Daf Yomi (Sefaria's calendar names a whole daf,
  * e.g. "Chullin 93", but the reader addresses one side at a time; "a" is the natural
  * starting point — the reader's own prev/next nav reaches "93b" from there).

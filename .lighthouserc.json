@@ -3,8 +3,8 @@
     "collect": {
       "url": [
         "http://localhost:3000/",
-        "http://localhost:3000/thu-vien",
-        "http://localhost:3000/doc/Genesis/1"
+        "http://localhost:3000/library",
+        "http://localhost:3000/read/Genesis/1"
       ],
       "startServerCommand": "npm run start",
       "startServerReadyPattern": "Ready in",
