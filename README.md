@@ -245,14 +245,19 @@ docs/
 ## Measured results
 
 Real numbers from this project's 2026 remediation effort — not estimates. Methodology and full
-context for each row is in the linked ADR/doc.
+context for each row is in the linked ADR/doc. Rows marked "live, 2026-08-17" were re-measured
+against the production URL with `scripts/measure.sh` on that date (post the Vietnamese→English
+route rename); the readability/sync/Lighthouse rows are one-time remediation-effort baselines that
+need their own dedicated tooling run (`audit-coverage.ts`, a full `sync:sefaria`, `npx lhci autorun`)
+to refresh and weren't re-run in that pass.
 
 | Metric | Before | After | Source |
 | --- | --- | --- | --- |
 | Book readability (200-title sample, real click-through) | 53.5% | 98.5% | `docs/adr/0001-schema-resolver.md` |
 | Production catalog sync (6,598 books, live) | — | 98.45% verified readable | `docs/db-sync.md` |
-| `/library/Halakhah` raw HTML (2,169-book category) | 555.9 KB | 72.4 KB | `docs/adr/0003-server-side-pagination.md` |
+| `/library/Halakhah` raw HTML (2,169-book category) | 555.9 KB | 75.7 KB | `docs/adr/0003-server-side-pagination.md`, reverified live 2026-08-17 |
 | Local TTFB, p50 | 640 ms | 4.9 ms | `scripts/measure.sh` baseline vs. after Phase 4 caching |
+| Production TTFB, p50 / p95 (`/read/Genesis/1`, live, 20 runs) | — | 223 ms / 261 ms | `scripts/measure.sh`, live 2026-08-17 |
 | Lighthouse — `/` (Performance / A11y / Best Practices / SEO) | — | 77 / 98 / 100 / 100 | `.lighthouserc.json` |
 | Lighthouse — `/library` | — | 84 / 100 / 100 / 100 | `.lighthouserc.json` |
 | Lighthouse — `/read/Genesis/1` | — | 88 / 98 / 100 / 100 | `.lighthouserc.json` |
