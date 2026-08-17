@@ -252,12 +252,15 @@ directly comparable, not resampled). TTFB is graded per web.dev's own published 
 (Good ≤ 800 ms, Needs Improvement ≤ 1800 ms, Poor > 1800 ms — [web.dev/articles/ttfb](https://web.dev/articles/ttfb)),
 and reported at p75 — the percentile Core Web Vitals field assessment itself uses
 ([web.dev/defining-core-web-vitals-thresholds](https://web.dev/articles/defining-core-web-vitals-thresholds)) — from
-n=20 sequential requests per route, a RUM-style minimum for a stable tail percentile. Real-browser
-metrics (LCP, CLS, INP) require an actual rendering engine (Lighthouse/CrUX), not curl, and are out
-of scope for this pass — see `.lighthouserc.json` (`npx lhci autorun` against a local production
-build) for those; they weren't re-run here. The full production catalog sync (6,598+ books, ~26 min,
-writes to the production DB) is a mutating, long-running job — also not re-run in this pass; ask
-before triggering it.
+n=20 sequential requests per route, a RUM-style minimum for a stable tail percentile. Lighthouse rows
+were re-run live against production (`npx lighthouse <url> --only-categories=performance,
+accessibility,best-practices,seo`, matching `.lighthouserc.json`'s route set) rather than skipped —
+Core Web Vitals (LCP, CLS, TBT as this pass's lab proxy for INP) are graded per web.dev's own
+thresholds ([web.dev/articles/lcp](https://web.dev/articles/lcp),
+[web.dev/articles/cls](https://web.dev/articles/cls),
+[web.dev/articles/tbt](https://web.dev/articles/tbt)). The full production catalog sync (6,598+
+books, ~26 min, writes to the production DB) is a mutating, long-running job — not re-run in this
+pass; ask before triggering it.
 
 | Metric | Before | After | Source |
 | --- | --- | --- | --- |
@@ -265,14 +268,33 @@ before triggering it.
 | Production catalog sync (6,602 books as of 2026-08-17, live) | — | 98.45% verified readable | `docs/db-sync.md` (last full sync run, not re-run this pass) |
 | `/library/Halakhah` raw HTML (2,169-book category) | 555.9 KB | 75.7 KB | `docs/adr/0003-server-side-pagination.md`, reverified live 2026-08-17 |
 | Local TTFB, p50 | 640 ms | 4.9 ms | `scripts/measure.sh` baseline vs. after Phase 4 caching |
-| Lighthouse — `/` (Performance / A11y / Best Practices / SEO) | — | 77 / 98 / 100 / 100 | `.lighthouserc.json` |
-| Lighthouse — `/library` | — | 84 / 100 / 100 / 100 | `.lighthouserc.json` |
-| Lighthouse — `/read/Genesis/1` | — | 88 / 98 / 100 / 100 | `.lighthouserc.json` |
+| Lighthouse — `/` (Performance / A11y / Best Practices / SEO) | 77 / 98 / 100 / 100 | 77 / 99 / 100 / 100 | live 2026-08-17 |
+| Lighthouse — `/library` | 84 / 100 / 100 / 100 | 70 / 100 / 100 / 100 | live 2026-08-17 |
+| Lighthouse — `/read/Genesis/1` | 88 / 98 / 100 / 100 | 94 / 94 / 100 / 100 | live 2026-08-17 |
 
-The Performance scores (77–88) are the main known gap — not addressed by this remediation, which
-focused on correctness (readability, 404 semantics), data volume, and SEO/a11y. Likely next targets
-are Sefaria fetch latency on cache-miss and unoptimized image/font loading, but that wasn't profiled
-here.
+`/library`'s Performance score **regressed 84 → 70** since the original remediation (see the Core
+Web Vitals table below — its 730 ms Total Blocking Time and 18.9s of main-thread work are the
+proximate cause; not yet root-caused, flagged for a follow-up, not fixed in this pass).
+`/read/Genesis/1`'s Accessibility score also dipped 98 → 94 (Lighthouse flags an `aria-hidden`
+element containing a focusable descendant, an out-of-order heading level, and a label/accessible-name
+mismatch — same caveat, flagged not fixed). `/`'s Performance (77) is unchanged and remains the other
+known gap. None of this was addressed by the original remediation, which focused on correctness
+(readability, 404 semantics), data volume, and SEO/a11y — Sefaria fetch latency on cache-miss and
+unoptimized image/font loading remain the likely next targets.
+
+### Core Web Vitals (live, 2026-08-17, Lighthouse mobile-emulated lab run)
+
+| Page | LCP (graded) | CLS (graded) | TBT (graded) |
+| --- | --- | --- | --- |
+| `/` | 3.7 s — Needs Improvement | 0 — Good | 180 ms — Good |
+| `/library` | 3.3 s — Needs Improvement | 0 — Good | 730 ms — Poor |
+| `/read/Genesis/1` | 2.7 s — Needs Improvement | 0.055 — Good | 120 ms — Good |
+
+Grading thresholds: LCP Good ≤2.5s / Needs Improvement ≤4s / Poor >4s; CLS Good ≤0.1 / Needs
+Improvement ≤0.25 / Poor >0.25; TBT (Lighthouse's lab proxy for INP) Good ≤200ms / Needs Improvement
+≤600ms / Poor >600ms — all per web.dev's published Core Web Vitals thresholds linked above. LCP
+lands in "Needs Improvement" on every page measured — this is the one metric that's consistently
+short of "Good" site-wide, ahead of `/library`'s TBT as a target for follow-up work.
 
 The readability re-check found **6 titles newly broken** since the original 98.5% baseline (5 with a
 loading `/book` page but no extractable "Đọc từ đầu" link, 1 with the `/book` page itself 404ing —
