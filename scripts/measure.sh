@@ -34,8 +34,14 @@ done
 echo "chunks=$n total_compressed=${tot}B" | tee -a "$OUT"
 
 echo "--- Sitemap ---" | tee -a "$OUT"
-sm=$(curl -s -o /tmp/_sm.xml -w '%{size_download} %{time_total}' "$BASE/sitemap.xml")
-echo "size_time=$sm urls=$(grep -c '<loc>' /tmp/_sm.xml) read_urls=$(grep -c 'read/' /tmp/_sm.xml)" | tee -a "$OUT"
+# generateSitemaps() splits the catalog across /sitemap/[id].xml chunks (see
+# src/app/robots.ts) — there is no single /sitemap.xml once split, so read the
+# chunk list from robots.txt instead of assuming a fixed URL/count.
+: > /tmp/_sm.xml
+for sm_url in $(curl -s "$BASE/robots.txt" | grep -oE 'https?://[^ ]+/sitemap/[^ ]+\.xml'); do
+  curl -s "$sm_url" >> /tmp/_sm.xml
+done
+echo "chunks=$(curl -s "$BASE/robots.txt" | grep -c '^Sitemap:') urls=$(grep -c '<loc>' /tmp/_sm.xml) read_urls=$(grep -c 'read/' /tmp/_sm.xml)" | tee -a "$OUT"
 
 echo "--- Unbounded URL (crawler trap) ---" | tee -a "$OUT"
 for c in 129 130 200 999 5000; do

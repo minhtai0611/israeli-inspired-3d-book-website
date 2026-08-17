@@ -208,7 +208,9 @@ src/
                                  getAudioCantillation (PocketTorah trope clips via related_api, with
                                  its own Postgres SWR cache), getGlobalCalendars +
                                  calendarLinkTarget (Daf Yomi / Parashat HaShavua → route target),
-                                 HTML cleanup
+                                 HTML cleanup; retries transient network errors AND 429/5xx upstream
+                                 responses so a one-off Sefaria blip can't get baked into a page's
+                                 ISR cache as a stale error
     glossary.ts                  ~100-term Hebrew/Jewish glossary + the regex used to auto-match
                                  terms in free text (see GlossaryText.tsx)
     schema-resolver.ts          Resolves Sefaria's 3 address schemes (integer/Talmud daf/complex)

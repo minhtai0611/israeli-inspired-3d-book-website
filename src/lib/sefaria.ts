@@ -54,17 +54,32 @@ export class SefariaNotFoundError extends Error {}
 export class SefariaUpstreamError extends Error {}
 
 /**
- * Retries only network/timeout failures (not HTTP error statuses — those are
- * informative, not transient). Needed because building the site's popular
- * chapters/books (generateStaticParams) fires hundreds of concurrent
- * requests at Sefaria; without this, a single slow response under that load
- * fails the entire production build, even though a plain retry succeeds.
+ * Retries network/timeout failures, plus transient upstream statuses (429,
+ * 5xx) — not other HTTP error statuses (404 etc. are informative, not
+ * transient). Needed because building the site's popular chapters/books
+ * (generateStaticParams) fires hundreds of concurrent requests at Sefaria;
+ * without this, a single slow response under that load fails the entire
+ * production build, even though a plain retry succeeds.
+ *
+ * The 429/5xx branch was added after a one-off Sefaria 5xx on a rarely-hit
+ * ref (e.g. an out-of-range /read/[book]/[chapter] chapter number) turned
+ * into a hard SefariaUpstreamError that Vercel's ISR cache then served as a
+ * stale HIT for hours, since that page had never rendered successfully
+ * before to fall back to (confirmed live, 2026-08-17). A persistent failure
+ * still throws exactly as before — only the last attempt's response/error is
+ * ever surfaced to the caller.
  */
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
   let lastError: unknown;
   for (let i = 0; i < attempts; i++) {
     try {
-      return await fetch(url, init);
+      const res = await fetch(url, init);
+      const transientStatus = res.status === 429 || res.status >= 500;
+      if (transientStatus && i < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 300 * 2 ** i));
+        continue;
+      }
+      return res;
     } catch (e) {
       lastError = e;
       if (i < attempts - 1) await new Promise((r) => setTimeout(r, 300 * 2 ** i));
