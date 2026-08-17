@@ -246,18 +246,25 @@ docs/
 
 Real numbers from this project's 2026 remediation effort — not estimates. Methodology and full
 context for each row is in the linked ADR/doc. Rows marked "live, 2026-08-17" were re-measured
-against the production URL with `scripts/measure.sh` on that date (post the Vietnamese→English
-route rename); the readability/sync/Lighthouse rows are one-time remediation-effort baselines that
-need their own dedicated tooling run (`audit-coverage.ts`, a full `sync:sefaria`, `npx lhci autorun`)
-to refresh and weren't re-run in that pass.
+against the production URL that date, using `scripts/measure.sh` (HTTP-level metrics) and
+`scripts/audit-coverage.ts` (readability, same fixed seed as the original remediation so results are
+directly comparable, not resampled). TTFB is graded per web.dev's own published thresholds
+(Good ≤ 800 ms, Needs Improvement ≤ 1800 ms, Poor > 1800 ms — [web.dev/articles/ttfb](https://web.dev/articles/ttfb)),
+and reported at p75 — the percentile Core Web Vitals field assessment itself uses
+([web.dev/defining-core-web-vitals-thresholds](https://web.dev/articles/defining-core-web-vitals-thresholds)) — from
+n=20 sequential requests per route, a RUM-style minimum for a stable tail percentile. Real-browser
+metrics (LCP, CLS, INP) require an actual rendering engine (Lighthouse/CrUX), not curl, and are out
+of scope for this pass — see `.lighthouserc.json` (`npx lhci autorun` against a local production
+build) for those; they weren't re-run here. The full production catalog sync (6,598+ books, ~26 min,
+writes to the production DB) is a mutating, long-running job — also not re-run in this pass; ask
+before triggering it.
 
 | Metric | Before | After | Source |
 | --- | --- | --- | --- |
-| Book readability (200-title sample, real click-through) | 53.5% | 98.5% | `docs/adr/0001-schema-resolver.md` |
-| Production catalog sync (6,598 books, live) | — | 98.45% verified readable | `docs/db-sync.md` |
+| Book readability (200-title sample, seed 20260725, real click-through) | 53.5% | 97.0% | `docs/coverage-report.md`, reverified live 2026-08-17 |
+| Production catalog sync (6,602 books as of 2026-08-17, live) | — | 98.45% verified readable | `docs/db-sync.md` (last full sync run, not re-run this pass) |
 | `/library/Halakhah` raw HTML (2,169-book category) | 555.9 KB | 75.7 KB | `docs/adr/0003-server-side-pagination.md`, reverified live 2026-08-17 |
 | Local TTFB, p50 | 640 ms | 4.9 ms | `scripts/measure.sh` baseline vs. after Phase 4 caching |
-| Production TTFB, p50 / p95 (`/read/Genesis/1`, live, 20 runs) | — | 223 ms / 261 ms | `scripts/measure.sh`, live 2026-08-17 |
 | Lighthouse — `/` (Performance / A11y / Best Practices / SEO) | — | 77 / 98 / 100 / 100 | `.lighthouserc.json` |
 | Lighthouse — `/library` | — | 84 / 100 / 100 / 100 | `.lighthouserc.json` |
 | Lighthouse — `/read/Genesis/1` | — | 88 / 98 / 100 / 100 | `.lighthouserc.json` |
@@ -266,6 +273,41 @@ The Performance scores (77–88) are the main known gap — not addressed by thi
 focused on correctness (readability, 404 semantics), data volume, and SEO/a11y. Likely next targets
 are Sefaria fetch latency on cache-miss and unoptimized image/font loading, but that wasn't profiled
 here.
+
+The readability re-check found **6 titles newly broken** since the original 98.5% baseline (5 with a
+loading `/book` page but no extractable "Đọc từ đầu" link, 1 with the `/book` page itself 404ing —
+see `docs/coverage-report.md` for the exact titles). Not investigated further in this pass; flagged
+for a follow-up.
+
+### Production TTFB by route/page type (live, 2026-08-17)
+
+One route per Sefaria address-kind (`docs/adr/0001-schema-resolver.md`: integer chapters, Talmud
+daf, complex-schema sections), plus a large (2,169-book) and a minimal (1-book) category, since page
+cost scales with catalog data volume as much as route type. Full raw output in
+`docs/metrics-raw.txt` (gitignored, regenerate with `scripts/measure.sh`).
+
+| Route (page type) | p50 | p75 (graded) | p95 | Cache |
+| --- | --- | --- | --- | --- |
+| `/` (home) | 239 ms | 259 ms — Good | 804 ms | ISR HIT |
+| `/library` (catalog index) | 295 ms | 316 ms — Good | 1162 ms | ISR HIT |
+| `/library/Halakhah` (2,169-book category) | 805 ms | 868 ms — Needs Improvement | 993 ms | dynamic (MISS) |
+| `/library/Musar` (1-book category) | 811 ms | 822 ms — Needs Improvement | 1022 ms | dynamic (MISS) |
+| `/search?q=...` | 746 ms | 759 ms — Good | 951 ms | dynamic (MISS) |
+| `/book/Genesis` (integer-address book) | 228 ms | 234 ms — Good | 1068 ms | ISR HIT |
+| `/book/Berakhot` (Talmud daf book) | 244 ms | 250 ms — Good | 258 ms | ISR HIT |
+| `/book/Zohar` (complex-schema book) | 224 ms | 238 ms — Good | 266 ms | ISR HIT |
+| `/read/Genesis/1` (integer chapter) | 221 ms | 226 ms — Good | 1228 ms | ISR HIT |
+| `/read/Berakhot/2a` (Talmud daf) | 222 ms | 224 ms — Good | 432 ms | ISR HIT |
+| `/read/Zohar/...` (complex section) | 223 ms | 235 ms — Good | 493 ms | ISR HIT |
+| `/api/health` (API route) | 421 ms | 430 ms — Good | 609 ms | dynamic (MISS) |
+
+`/library/[category]` and `/search` grade "Needs Improvement" — expected, not a regression: both are
+intentionally dynamic, server-rendered per request for URL-param filter/sort/pagination (see
+Features above; `X-Vercel-Cache: MISS` on every one of these confirms it), unlike `/book` and `/read`,
+which are ISR-cached after their first render. `/library/Halakhah` and the 1-book `/library/Musar`
+land at nearly the same p75 despite the 2,169x difference in catalog size, meaning cost here is
+dominated by per-request DB/render overhead, not category size — consistent with the raw-HTML-size
+finding above (`/library/Halakhah` no longer scales with row count either, per ADR 0003).
 
 ## Deployment
 
