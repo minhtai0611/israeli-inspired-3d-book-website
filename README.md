@@ -45,19 +45,21 @@ is unreachable. Chapter text is mirrored into a cache on read. See [`docs/db-syn
 
 ## Getting started
 
-**Prerequisites:** Node.js 22+, a PostgreSQL database.
+**Prerequisites:** Node.js 22+ with npm 10.x (pinned in `engines`, enforced via `.npmrc`'s
+`engine-strict=true` — `npm install` refuses to run under npm 11+).
 
 ```bash
 npm install
 ```
 
-> **If you touch `package.json`,** regenerate the lockfile with the npm version CI uses, not
-> whatever's installed locally: `npx npm@10 install --package-lock-only`. CI's Node 22 runner
-> bundles npm 10.x, and npm 11 resolves platform-specific optional dependencies (`@esbuild/*`,
-> `@emnapi/*`) differently — a lockfile written by npm 11 fails `npm ci` under npm 10 with
-> `EUSAGE ... package.json and package-lock.json ... not in sync`, even though nothing is
-> actually wrong with your dependencies. This has broken CI three times; see git history for
-> `fix(ci): regenerate lockfile ...` commits.
+If your global npm is newer than 10.x (`npm -v`), either use `npx npm@10 install`/`npx npm@10 ci`
+directly, or install a matching npm locally (`npm install -g npm@10` or `corepack use npm@10`).
+CI's Node 22 runner bundles npm 10.x, and npm 11 resolves platform-specific optional dependencies
+(`@esbuild/*`, `@emnapi/*`) differently — a lockfile written by npm 11 fails `npm ci` under npm 10
+with `EUSAGE ... package.json and package-lock.json ... not in sync`, even though nothing is
+actually wrong with your dependencies. This broke CI three times before the engine pin was added;
+see git history for `fix(ci): regenerate lockfile ...` commits. **If you touch `package.json`,**
+regenerate the lockfile with `npx npm@10 install --package-lock-only` so it stays in sync.
 
 Create a `.env` file:
 

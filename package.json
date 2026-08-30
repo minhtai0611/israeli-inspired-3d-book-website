@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Vietnamese-language reading site for Torah, Tanakh, Mishnah, Talmud, Kabbalah and Psalms, serving Hebrew/English text live from the Sefaria Open API.",
   "private": true,
+  "engines": {
+    "node": ">=22",
+    "npm": "10.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
