@@ -51,6 +51,14 @@ is unreachable. Chapter text is mirrored into a cache on read. See [`docs/db-syn
 npm install
 ```
 
+> **If you touch `package.json`,** regenerate the lockfile with the npm version CI uses, not
+> whatever's installed locally: `npx npm@10 install --package-lock-only`. CI's Node 22 runner
+> bundles npm 10.x, and npm 11 resolves platform-specific optional dependencies (`@esbuild/*`,
+> `@emnapi/*`) differently — a lockfile written by npm 11 fails `npm ci` under npm 10 with
+> `EUSAGE ... package.json and package-lock.json ... not in sync`, even though nothing is
+> actually wrong with your dependencies. This has broken CI three times; see git history for
+> `fix(ci): regenerate lockfile ...` commits.
+
 Create a `.env` file:
 
 ```bash
